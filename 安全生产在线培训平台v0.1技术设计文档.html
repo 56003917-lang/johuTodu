@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全生产在线培训平台 v0.1 技术设计文档</title>
+<style>
+/* ========== Reset & Base ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { min-height: 100%; }
+body {
+  position: relative;
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", "Noto Sans SC", sans-serif;
+  color: #1f2d3d;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background: linear-gradient(160deg, #f8fafc 0%, #ffffff 45%, #cfe0f5 100%);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 35% at 12% 8%, rgba(255,255,255,0.55) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 88% 90%, rgba(255,255,255,0.45) 0%, transparent 55%);
+}
+body > * { position: relative; z-index: 1; }
+
+/* ========== 封面 Hero ========== */
+.title {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 50%, #4f8ef7 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.title::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 82%, rgba(255,255,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 82% 18%, rgba(255,255,255,0.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+.title > * { position: relative; z-index: 1; }
+.title h1 { font-size: 28px; font-weight: 800; margin: 0 0 14px 0; letter-spacing: 1px; color: #ffffff; }
+.title .accent-line {
+  width: 48px; height: 3px; background: rgba(255,255,255,0.85);
+  margin: 0 auto 18px; border-radius: 2px;
+}
+.title p { font-size: 15px; color: rgba(255,255,255,0.85); margin: 0; line-height: 1.7; }
+
+/* ========== 章节标题 ========== */
+h1.heading {
+  font-size: 26px;
+  color: #0f1e33;
+  margin: 36px 0 16px 0;
+  font-weight: 700;
+  border-left: 4px solid #3b82f6;
+  padding-left: 16px;
+}
+h2.heading {
+  font-size: 20px;
+  color: #0f1e33;
+  margin: 26px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #c9d6f3;
+  font-weight: 600;
+}
+
+/* ========== 正文 / 列表 ========== */
+.paragraph { font-size: 15px; color: #1f2d3d; line-height: 1.8; margin: 0 0 16px 0; text-indent: 2em; }
+.list { margin: 0 0 16px 0; padding-left: 24px; font-size: 15px; color: #1f2d3d; line-height: 1.8; }
+.list li { margin-bottom: 8px; }
+.list li::marker { color: #3b82f6; }
+
+/* ========== 正文区卡片化容器 ========== */
+.doc-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+.doc-section.alt { background: #e6edf6; box-shadow: none; }
+
+/* ========== callout ========== */
+.callout {
+  margin: 0 0 16px 0;
+  padding: 16px 24px;
+  background: #e8f0fe;
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+}
+.callout[data-variant="warning"] { background: #FFF3E0; border-left-color: #d97706; }
+.callout[data-variant="quote"]   { background: #f0fdfa; border-left-color: #14b8a6; }
+.callout p { font-size: 15px; color: #1f2d3d; margin: 0; line-height: 1.8; }
+.callout p + p { margin-top: 8px; }
+
+/* ========== 表格 ========== */
+.table-wrap {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  overflow-x: auto;
+  margin: 0 0 16px 0;
+}
+.table-caption {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #c9d6f3, #e8f0fe);
+  color: #0f1e33;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #dbe4ef;
+}
+table.table { width: 100%; border-collapse: collapse; font-size: 13.5px; table-layout: fixed; }
+table.table thead th {
+  padding: 11px 14px;
+  text-align: left;
+  background: #c9d6f3;
+  color: #0f1e33;
+  font-weight: 700;
+  border-bottom: 2px solid #dbe4ef;
+  word-break: break-word;
+}
+table.table tbody td { padding: 11px 14px; border-bottom: 1px solid #dbe4ef; color: #1f2d3d; word-break: break-word; }
+table.table tbody tr:last-child td { border-bottom: none; }
+table.table tbody tr:hover { background: #e8f0fe; }
+table.table td code, table.table th code { font-size: 12.5px; }
+
+/* ========== 代码块 ========== */
+pre.code {
+  background: #0f1e33;
+  color: #dbeafe;
+  border-radius: 10px;
+  padding: 18px 20px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-x: auto;
+  margin: 0 0 16px 0;
+  white-space: pre;
+}
+pre.code .cm { color: #7ea6d8; }
+code.inline {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  background: #e8f0fe;
+  color: #1e3a5f;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ========== timeline ========== */
+.timeline { list-style: none; padding: 0; margin: 0 0 16px 0; }
+.timeline li {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 18px;
+  border-left: 2px solid #e8f0fe;
+  margin-left: 6px;
+}
+.timeline li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: -7px; top: 5px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #f4f7fb;
+  box-shadow: 0 0 0 2px #e8f0fe;
+}
+.timeline strong { font-size: 14px; color: #2563eb; }
+.timeline p { font-size: 15px; color: #1f2d3d; margin: 4px 0 0 0; line-height: 1.8; }
+
+/* ========== card ========== */
+.card-grid { display: flex; gap: 16px; margin: 0 0 16px 0; }
+.card {
+  flex: 1;
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-top: 3px solid #3b82f6;
+}
+.card h3 { font-size: 17px; color: #0f1e33; margin: 0 0 8px 0; font-weight: 700; }
+.card p  { font-size: 14px; color: #5b6b80; margin: 0; line-height: 1.7; }
+
+/* ========== 架构图容器 ========== */
+.diagram-wrap {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  padding: 20px;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+.diagram-wrap svg { max-width: 100%; height: auto; }
+.diagram-caption {
+  font-size: 13px;
+  color: #5b6b80;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* ========== 目录 ========== */
+.toc {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  padding: 20px 28px;
+  margin: 0 0 16px 0;
+}
+.toc ol { margin: 0; padding-left: 22px; font-size: 14.5px; line-height: 2.0; }
+.toc a { color: #2563eb; text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* ========== divider ========== */
+.divider { margin: 32px 0; text-align: center; user-select: none; }
+.divider .line {
+  display: inline-block;
+  width: 36px;
+  height: 1px;
+  vertical-align: middle;
+  background: linear-gradient(to right, transparent, #e8f0fe);
+}
+.divider .line:last-child { background: linear-gradient(to left, transparent, #e8f0fe); }
+.divider .diamond {
+  display: inline-block;
+  width: 8px; height: 8px;
+  margin: 0 12px;
+  vertical-align: middle;
+  transform: rotate(45deg);
+  background: #3b82f6;
+  border-radius: 1px;
+  box-shadow: 0 0 0 2px #f4f7fb;
+}
+
+/* ========== 尾页 ========== */
+.end_page {
+  margin-top: 24px;
+  padding: 56px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #c9d6f3 0%, #e8f0fe 100%);
+  border-radius: 16px;
+}
+.end_page h1 { font-size: 26px; color: #0f1e33; margin: 0 0 16px 0; font-weight: 800; }
+.end_page p  { font-size: 15px; color: #5b6b80; margin: 0; line-height: 1.8; }
+
+/* ========== 响应式 ========== */
+@media screen and (max-width: 600px) {
+  body { padding: 16px !important; }
+  h1 { font-size: 22px !important; }
+  h2 { font-size: 18px !important; }
+  h3 { font-size: 16px !important; }
+  .card-grid { flex-direction: column; }
+  .paragraph, .list, .callout p { font-size: 14px; }
+}
+
+/* ========== 打印优化 ========== */
+@media print {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #f4f7fb;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body::before { display: none; }
+  .title, .end_page { border-radius: 0; box-shadow: none; }
+  .doc-section, .card, .table-wrap, .diagram-wrap, .toc { box-shadow: none; border: 1px solid #dbe4ef; }
+  section { break-inside: auto !important; }
+  pre.code { break-inside: avoid; }
+}
+</style>
+</head>
+<body class="mode-doc" data-palette="ink-blue">
+
+  <!-- ===== 封面 ===== -->
+  <section class="title">
+    <h1>安全生产在线培训平台 v0.1 技术设计文档</h1>
+    <div class="accent-line"></div>
+    <p>通信建设工程施工企业 · 内部自用 · 企业规模约 400 人<br>依据《v0.1 产品设计文档》编制 · 版本 v0.1 · 2026 年 10 月 8 日</p>
+  </section>
+
+  <!-- ===== 文档说明 ===== -->
+  <h1 class="heading" data-level="1">〇、文档说明</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">本文档是《安全生产在线培训平台 v0.1 产品设计文档》的技术实现方案，面向开发与运维人员，回答三个问题：在约 400 人的企业规模下，系统怎样以最低成本跑起来（选型与架构）；学时数据怎样做到可信、可追溯（核心引擎与数据设计）；将来升级到 v0.2 及以后时，哪些钱现在就要花、哪些钱坚决不花（升级路径）。</p>
+    <p class="paragraph">一句话总纲：用"单机 + 轻栈"承接 400 人规模，把复杂度预算全部花在"学时可信"上，其余一切从简；同时通过少量低成本的结构预留（版本化 API、ORM 抽象、字段预留），把未来升级变成"加表加模块"，而不是"推倒重来"。</p>
+  </div>
+
+  <!-- ===== 目录 ===== -->
+  <nav class="toc">
+    <ol>
+      <li><a href="#s1">一、规模评估与容量测算（400 人）</a></li>
+      <li><a href="#s2">二、总体架构</a></li>
+      <li><a href="#s3">三、技术选型与理由</a></li>
+      <li><a href="#s4">四、数据模型设计</a></li>
+      <li><a href="#s5">五、API 设计（/api/v1）</a></li>
+      <li><a href="#s6">六、学习引擎设计（计时 / 防挂机 / 断点）</a></li>
+      <li><a href="#s7">七、课程库与文件处理</a></li>
+      <li><a href="#s8">八、配置设计</a></li>
+      <li><a href="#s9">九、安全设计</a></li>
+      <li><a href="#s10">十、部署与运维</a></li>
+      <li><a href="#s11">十一、升级路径与成本评估</a></li>
+      <li><a href="#s12">十二、开发里程碑（3 周）</a></li>
+      <li><a href="#s13">十三、风险与对策</a></li>
+    </ol>
+  </nav>
+
+  <!-- ===== 一、规模评估 ===== -->
+  <h1 class="heading" id="s1" data-level="1">一、规模评估与容量测算（400 人）</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">技术方案的规模取决于"最坏的一天"，而不是平均的一天。安全培训的典型高峰是节前教育、事故通报后的专项学习——全员被要求限期完成，会在几天内挤在一起学。按此场景做保守测算：</p>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">容量测算：按集中学习最坏场景估算</div>
+    <table class="table">
+      <colgroup>
+        <col style="width:26%;">
+        <col style="width:22%;">
+        <col style="width:52%;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>指标</th>
+          <th>估算值</th>
+          <th>测算依据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>注册用户</td>
+          <td>400</td>
+          <td>企业全员（含项目部／班组），单次 Excel 导入</td>
+        </tr>
+        <tr>
+          <td>日活跃学员</td>
+          <td>100 ~ 200</td>
+          <td>限期完成场景下约 25% ~ 50% 的人当天要学</td>
+        </tr>
+        <tr>
+          <td>峰值同时在线</td>
+          <td>80 ~ 120</td>
+          <td>班前会 / 午休 / 傍晚集中学习，按日活的一半估</td>
+        </tr>
+        <tr>
+          <td>心跳写入峰值</td>
+          <td>约 8 QPS</td>
+          <td>每人每 15 秒一次心跳，120 人 ÷ 15s ≈ 8 次/秒</td>
+        </tr>
+        <tr>
+          <td>文档下载峰值</td>
+          <td>瞬时 ~200MB</td>
+          <td>100 人同时打开平均 2MB 的 PDF，千兆内网可承受</td>
+        </tr>
+        <tr>
+          <td>课程库总量</td>
+          <td>数百个文件，&lt; 5GB</td>
+          <td>文档类课程，单文件 1 ~ 30MB</td>
+        </tr>
+        <tr>
+          <td>年数据增量</td>
+          <td>&lt; 1GB（数据库）</td>
+          <td>400 人 × 每年 40 学时 × 心跳明细，估算约 500 万行/年以内</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="callout" data-variant="quote">
+    <p><strong>结论：</strong>8 QPS 的写入峰值对 SQLite（WAL 模式，实测可承受每秒百次级写入）有十倍以上余量；文档并发下载是网络问题而非计算问题，千兆内网即可。因此 v0.1 采用"单台服务器 + 单应用进程"架构，不引入缓存、消息队列、负载均衡——这些组件在 400 人规模下只会增加部署与运维成本，不产生任何收益。</p>
+  </aside>
+
+  <!-- ===== 二、总体架构 ===== -->
+  <h1 class="heading" id="s2" data-level="1">二、总体架构</h1>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 780 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="系统分层架构图">
+      <defs>
+        <linearGradient id="lgApp" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#3b82f6"/>
+          <stop offset="1" stop-color="#2563eb"/>
+        </linearGradient>
+      </defs>
+      <style>
+        .layer-t { font: 700 14px "Microsoft YaHei", sans-serif; fill: #0f1e33; }
+        .box-t  { font: 600 13px "Microsoft YaHei", sans-serif; fill: #1f2d3d; }
+        .box-s  { font: 400 11px "Microsoft YaHei", sans-serif; fill: #5b6b80; }
+        .arrow-l { stroke: #3b82f6; stroke-width: 2; fill: none; marker-end: url(#ar); }
+      </style>
+      <!-- 客户端层 -->
+      <text x="390" y="24" text-anchor="middle" class="layer-t">客户端层（浏览器，零安装）</text>
+      <rect x="90" y="38" width="250" height="58" rx="10" fill="#e8f0fe" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="215" y="62" text-anchor="middle" class="box-t">学员端 H5 单页</text>
+      <text x="215" y="82" text-anchor="middle" class="box-s">手机浏览器 · 登录 / 阅读 / 计时</text>
+      <rect x="440" y="38" width="250" height="58" rx="10" fill="#e8f0fe" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="565" y="62" text-anchor="middle" class="box-t">管理端 H5 单页</text>
+      <text x="565" y="82" text-anchor="middle" class="box-s">PC 浏览器 · 导入名册 / 导出台账</text>
+      <!-- 接入层 -->
+      <line class="arrow-l" x1="215" y1="96" x2="215" y2="150"/>
+      <line class="arrow-l" x1="565" y1="96" x2="565" y2="150"/>
+      <rect x="90" y="154" width="600" height="48" rx="10" fill="#f4f7fb" stroke="#93b4e5" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="390" y="174" text-anchor="middle" class="box-t">企业内网（局域网 / VPN）</text>
+      <text x="390" y="192" text-anchor="middle" class="box-s">可选：Nginx 反向代理 + 自签 HTTPS；默认 Uvicorn 直接监听内网 IP</text>
+      <!-- 应用层 -->
+      <line class="arrow-l" x1="390" y1="202" x2="390" y2="238"/>
+      <rect x="90" y="242" width="600" height="118" rx="12" fill="url(#lgApp)"/>
+      <text x="390" y="266" text-anchor="middle" class="layer-t" style="fill:#ffffff;">应用层 · FastAPI 单进程（Uvicorn，监听内网地址）</text>
+      <rect x="112" y="280" width="132" height="60" rx="8" fill="#ffffff" opacity="0.92"/>
+      <text x="178" y="304" text-anchor="middle" class="box-t">静态页面服务</text>
+      <text x="178" y="322" text-anchor="middle" class="box-s">2 张 H5 页面</text>
+      <rect x="262" y="280" width="132" height="60" rx="8" fill="#ffffff" opacity="0.92"/>
+      <text x="328" y="304" text-anchor="middle" class="box-t">API v1</text>
+      <text x="328" y="322" text-anchor="middle" class="box-s">认证 / 课程 / 台账</text>
+      <rect x="412" y="280" width="132" height="60" rx="8" fill="#ffffff" opacity="0.92"/>
+      <text x="478" y="304" text-anchor="middle" class="box-t">学习引擎</text>
+      <text x="478" y="322" text-anchor="middle" class="box-s">心跳校验 / 防挂机</text>
+      <rect x="562" y="280" width="106" height="60" rx="8" fill="#ffffff" opacity="0.92"/>
+      <text x="615" y="304" text-anchor="middle" class="box-t">文件服务</text>
+      <text x="615" y="322" text-anchor="middle" class="box-s">课程扫描 / 下载</text>
+      <!-- 数据层 -->
+      <line class="arrow-l" x1="390" y1="360" x2="390" y2="396"/>
+      <text x="390" y="386" text-anchor="middle" class="layer-t" style="display:none;"></text>
+      <rect x="90" y="400" width="185" height="70" rx="10" fill="#e6edf6" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="182" y="428" text-anchor="middle" class="box-t">SQLite（WAL 模式）</text>
+      <text x="182" y="448" text-anchor="middle" class="box-s">用户 / 课程 / 学习记录</text>
+      <rect x="297" y="400" width="185" height="70" rx="10" fill="#e6edf6" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="389" y="428" text-anchor="middle" class="box-t">课程文件库</text>
+      <text x="389" y="448" text-anchor="middle" class="box-s">data/courses/（PDF）</text>
+      <rect x="505" y="400" width="185" height="70" rx="10" fill="#e6edf6" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="597" y="428" text-anchor="middle" class="box-t">备份目录</text>
+      <text x="597" y="448" text-anchor="middle" class="box-s">data/backups/（每日）</text>
+      <!-- 底注 -->
+      <text x="390" y="510" text-anchor="middle" class="box-s">单台内网服务器（4 核 8GB 即可）· Windows 服务 / systemd 托管 · 无外网依赖</text>
+      <text x="390" y="532" text-anchor="middle" class="box-s">升级预留：ORM 抽象数据层 · API 版本化 · 认证接口化 · 字段预留（见第十一节）</text>
+    </svg>
+    <div class="diagram-caption">图 1 · v0.1 系统分层架构（单机单进程，四层结构）</div>
+  </div>
+
+  <div class="doc-section">
+    <ul class="list">
+      <li><strong>进程模型：</strong>Uvicorn 单进程 + 异步 IO。SQLite 为单写者模型，多进程反而引入写锁竞争；单进程异步足以承载 8 QPS 心跳与并发文档下载，也让"课程文件扫描、定时备份"等任务可直接用进程内定时器实现，省掉独立的任务系统。</li>
+      <li><strong>会话状态：</strong>登录会话用服务端签名 Cookie（HttpOnly），不在数据库里存会话表——重启不丢状态、无缓存依赖；下文认证层抽象保留了将来改 Token / 对接统一身份的接口。</li>
+      <li><strong>静态与 API 同进程：</strong>两张 H5 页面由同一 FastAPI 进程的 StaticFiles 托管，部署单元只有一个目录 + 一个服务，"拷贝即部署"。</li>
+    </ul>
+  </div>
+
+  <!-- ===== 三、技术选型 ===== -->
+  <h1 class="heading" id="s3" data-level="1">三、技术选型与理由</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">选型原则：每引入一个组件，都必须回答"不用它会坏吗"</div>
+    <table class="table">
+      <colgroup>
+        <col style="width:20%;">
+        <col style="width:20%;">
+        <col style="width:36%;">
+        <col style="width:24%;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>层面</th>
+          <th>选型</th>
+          <th>理由</th>
+          <th>对升级成本的影响</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>运行时</td>
+          <td>Python 3.12</td>
+          <td>与团队现有环境一致，标准库 + FastAPI 生态成熟</td>
+          <td>无绑定风险</td>
+        </tr>
+        <tr>
+          <td>Web 框架</td>
+          <td>FastAPI + Uvicorn</td>
+          <td>异步原生，心跳类高频小请求开销低；自带 OpenAPI 文档便于联调</td>
+          <td>标准 ASGI 接口，可平滑替换服务器</td>
+        </tr>
+        <tr>
+          <td>数据库</td>
+          <td>SQLite（WAL 模式）</td>
+          <td>8 QPS 写入余量十倍以上；单文件备份、零运维；无独立数据库服务</td>
+          <td>经 ORM 抽象，迁移 PostgreSQL 预估 2~3 人日（见第十一节）</td>
+        </tr>
+        <tr>
+          <td>ORM / 数据访问</td>
+          <td>SQLAlchemy 2.0</td>
+          <td>屏蔽 SQLite 与 PostgreSQL 方言差异；迁移脚本成熟</td>
+          <td><strong>这是本次最重要的升级预留</strong></td>
+        </tr>
+        <tr>
+          <td>前端</td>
+          <td>原生 H5（HTML/CSS/JS），无框架无构建</td>
+          <td>2 张页面、零依赖、双击即用；不存在 npm 供应链与构建链维护成本</td>
+          <td>页面少，即使将来重写成本也可控</td>
+        </tr>
+        <tr>
+          <td>认证</td>
+          <td>服务端签名 Cookie（HttpOnly + SameSite）</td>
+          <td>内网 H5 最简单可靠的方案；itsdangerous 签名，无会话表</td>
+          <td>认证走独立模块接口，可替换为 LDAP/AD 适配器</td>
+        </tr>
+        <tr>
+          <td>密码哈希</td>
+          <td>passlib + bcrypt</td>
+          <td>行业标配，抗暴力破解</td>
+          <td>无</td>
+        </tr>
+        <tr>
+          <td>Excel 处理</td>
+          <td>openpyxl（读写 xlsx）</td>
+          <td>名册导入、台账导出均为 xlsx；纯 Python 无 Office 依赖</td>
+          <td>无</td>
+        </tr>
+        <tr>
+          <td>文档预览</td>
+          <td>浏览器原生 PDF 渲染 + PDF.js 本地化兜底</td>
+          <td>手机浏览器原生支持 PDF；PDF.js 单文件本地引用，处理老机型</td>
+          <td>上视频时播放器为独立组件，互不影响</td>
+        </tr>
+        <tr>
+          <td>定时任务</td>
+          <td>进程内 asyncio 定时器</td>
+          <td>文件扫描、每日备份两个任务，独立调度系统（如 Celery）纯属过度设计</td>
+          <td>任务函数独立成模块，可平移</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="callout" data-variant="warning">
+    <p><strong>明确不引入的组件（400 人规模下的反优化清单）：</strong>Redis / Memcached（无热点读压力）、消息队列 Celery（无异步任务量）、Nginx 强制部署（Uvicorn 直连即可，Nginx 仅作为可选的 HTTPS 终结点）、Docker/容器编排（单机内网服务，Windows 服务 / systemd 更省事）、前端框架 React/Vue（两张页面，构建链成本大于收益）、微服务拆分（单进程模块化已足够）。</p>
+  </aside>
+
+  <!-- ===== 四、数据模型 ===== -->
+  <h1 class="heading" id="s4" data-level="1">四、数据模型设计</h1>
+
+  <h2 class="heading" data-level="2">4.1 表清单与关系</h2>
+  <div class="doc-section">
+    <p class="paragraph">v0.1 共 5 张表。设计主线：把"累计口径"（study_records，供查询导出）与"明细留痕"（study_sessions，供审计回放）分开——台账改不了，明细对得上，这是学时可信在数据层的落点。</p>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">表清单</div>
+    <table class="table">
+      <colgroup>
+        <col style="width:22%;">
+        <col style="width:40%;">
+        <col style="width:38%;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>表名</th>
+          <th>职责</th>
+          <th>关键约束</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>users</code></td><td>员工名册与账号</td><td>工号唯一；软删除（status 字段），导入重复工号即更新而非报错</td></tr>
+        <tr><td><code>courses</code></td><td>课程元数据（扫描文件夹自动登记）</td><td>文件名唯一；记录文件指纹用于变更检测</td></tr>
+        <tr><td><code>study_records</code></td><td>每人每课的累计学时与断点（台账口径）</td><td>用户+课程唯一；<strong>只增改自身累计值，可追溯</strong></td></tr>
+        <tr><td><code>study_sessions</code></td><td>每次学习的明细留痕（审计口径）</td><td>只增不改（append-only）；记录防挂机结果</td></tr>
+        <tr><td><code>export_logs</code></td><td>台账导出操作记录</td><td>记录导出人、时间、范围，满足"谁导的、导了什么"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="heading" data-level="2">4.2 字段设计</h2>
+
+  <div class="table-wrap">
+    <div class="table-caption">users（员工名册）</div>
+    <table class="table">
+      <colgroup><col style="width:22%;"><col style="width:20%;"><col style="width:58%;"></colgroup>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>INTEGER PK</td><td>自增主键</td></tr>
+        <tr><td><code>employee_no</code></td><td>TEXT UNIQUE</td><td>工号，即登录账号；导入去重键</td></tr>
+        <tr><td><code>name</code></td><td>TEXT NOT NULL</td><td>姓名</td></tr>
+        <tr><td><code>department</code></td><td>TEXT</td><td>项目部／班组（台账汇总维度）</td></tr>
+        <tr><td><code>role</code></td><td>TEXT CHECK</td><td>仅 <code>admin</code> / <code>learner</code> 两种</td></tr>
+        <tr><td><code>password_hash</code></td><td>TEXT NOT NULL</td><td>bcrypt 哈希；初始密码=工号（可配置）</td></tr>
+        <tr><td><code>must_change_pwd</code></td><td>INTEGER</td><td>首登强制改密标记</td></tr>
+        <tr><td><code>status</code></td><td>INTEGER</td><td>1 在册 / 0 离职停用（软删除，台账历史保留）</td></tr>
+        <tr><td><code>mobile</code></td><td>TEXT</td><td><strong>预留字段</strong>（v0.1 导入可空，为短信/统一身份升级留位）</td></tr>
+        <tr><td><code>external_id</code></td><td>TEXT</td><td><strong>预留字段</strong>（未来 LDAP/AD/企业微信账号映射）</td></tr>
+        <tr><td><code>created_at</code> / <code>updated_at</code></td><td>TEXT ISO8601</td><td>UTC 存储，展示转本地时间</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">courses（课程库）</div>
+    <table class="table">
+      <colgroup><col style="width:22%;"><col style="width:20%;"><col style="width:58%;"></colgroup>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>INTEGER PK</td><td>自增主键</td></tr>
+        <tr><td><code>file_name</code></td><td>TEXT UNIQUE</td><td>文件名（含扩展名），上架与识别的唯一依据</td></tr>
+        <tr><td><code>title</code></td><td>TEXT NOT NULL</td><td>课程名称（配置登记，导出台账显示用）</td></tr>
+        <tr><td><code>file_type</code></td><td>TEXT CHECK</td><td>v0.1 仅 <code>pdf</code>（PPT 约定转 PDF 上架，见第七节）</td></tr>
+        <tr><td><code>required_minutes</code></td><td>INTEGER</td><td>达标学时（分钟），配置登记，法规修订只改配置</td></tr>
+        <tr><td><code>file_size</code> / <code>file_mtime</code> / <code>file_hash</code></td><td>—</td><td>文件指纹，扫描时检测"文件被替换"（替换则旧课程下架、新课程登记，历史学时保留不丢）</td></tr>
+        <tr><td><code>status</code></td><td>INTEGER</td><td>1 上架 / 0 下架</td></tr>
+        <tr><td><code>media_type</code> / <code>media_path</code></td><td>TEXT</td><td><strong>预留字段</strong>（未来视频课程：<code>video</code> + 存储路径）</td></tr>
+        <tr><td><code>created_at</code></td><td>TEXT ISO8601</td><td>首次扫描入库时间</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">study_records（学习累计，台账口径）</div>
+    <table class="table">
+      <colgroup><col style="width:22%;"><col style="width:20%;"><col style="width:58%;"></colgroup>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>INTEGER PK</td><td>自增主键</td></tr>
+        <tr><td><code>user_id</code> + <code>course_id</code></td><td>UNIQUE 组合</td><td>一人一课一条累计记录</td></tr>
+        <tr><td><code>total_seconds</code></td><td>INTEGER</td><td>累计有效秒数（服务端口径，见 6.1）</td></tr>
+        <tr><td><code>last_position</code></td><td>TEXT</td><td>断点位置（PDF 页码 / 滚动百分比 JSON）</td></tr>
+        <tr><td><code>challenge_miss</code></td><td>INTEGER</td><td>累计防挂机超时次数（台账展示"学习纪律"参考）</td></tr>
+        <tr><td><code>status</code></td><td>TEXT CHECK</td><td><code>in_progress</code> / <code>completed</code>（达标自动流转）</td></tr>
+        <tr><td><code>completed_at</code></td><td>TEXT</td><td>达标时间（导出台账关键列）</td></tr>
+        <tr><td><code>first_started_at</code> / <code>last_study_at</code></td><td>TEXT</td><td>首次开始 / 最近学习时间</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">study_sessions（学习明细，审计口径，只增不改）</div>
+    <table class="table">
+      <colgroup><col style="width:22%;"><col style="width:20%;"><col style="width:58%;"></colgroup>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>INTEGER PK</td><td>自增主键</td></tr>
+        <tr><td><code>user_id</code> / <code>course_id</code></td><td>INTEGER</td><td>冗余存储（不依赖 join 即可审计）</td></tr>
+        <tr><td><code>record_id</code></td><td>INTEGER</td><td>关联累计记录</td></tr>
+        <tr><td><code>started_at</code> / <code>ended_at</code></td><td>TEXT ISO8601</td><td>本次学习段起止（服务端时间）</td></tr>
+        <tr><td><code>gained_seconds</code></td><td>INTEGER</td><td>本段计入的有效秒数</td></tr>
+        <tr><td><code>heartbeat_count</code></td><td>INTEGER</td><td>本段心跳次数</td></tr>
+        <tr><td><code>confirm_ok</code> / <code>confirm_miss</code></td><td>INTEGER</td><td>本段防挂机确认成功 / 超时次数</td></tr>
+        <tr><td><code>client_ip</code> / <code>user_agent</code></td><td>TEXT</td><td>来源设备信息（审计追溯）</td></tr>
+        <tr><td><code>end_reason</code></td><td>TEXT</td><td><code>normal</code> / <code>timeout</code> / <code>logout</code> / <code>offline</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">export_logs（导出留痕）</div>
+    <table class="table">
+      <colgroup><col style="width:22%;"><col style="width:20%;"><col style="width:58%;"></colgroup>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>INTEGER PK</td><td>自增主键</td></tr>
+        <tr><td><code>operator_id</code></td><td>INTEGER</td><td>导出人（管理员）</td></tr>
+        <tr><td><code>export_type</code></td><td>TEXT</td><td><code>personal</code> / <code>department</code></td></tr>
+        <tr><td><code>scope</code></td><td>TEXT</td><td>导出范围（部门 / 全员 / 时间段）</td></tr>
+        <tr><td><code>row_count</code> / <code>created_at</code></td><td>—</td><td>行数与时间，供"台账版本"核对</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="heading" data-level="2">4.3 索引与数据规则</h2>
+  <div class="doc-section">
+    <ul class="list">
+      <li>索引： <code>users.employee_no</code>（唯一）、 <code>courses.file_name</code>（唯一）、 <code>study_records(user_id, course_id)</code>（唯一）、 <code>study_sessions(user_id, started_at)</code>、 <code>study_sessions(record_id)</code>——台账导出按人查明细，两个索引覆盖全部查询路径。</li>
+      <li>时间统一存 UTC ISO8601 字符串，展示层转本地；避免 SQLite 时区歧义。</li>
+      <li>外键开启（PRAGMA foreign_keys=ON）；离职停用不删行，学时历史永久保留。</li>
+      <li>心跳明细不入库：15 秒级心跳本身不落表（量太大且无审计必要），落库的是"学习段"（session）级别的汇总明细——审计粒度到"某天某时段学了多久、弹窗响应如何"，足够应对检查，又比逐心跳存储小两个数量级。</li>
+      <li>数据修正原则：study_sessions 不可修改；确需修正口径时，由管理员在导出环节说明，或在 v0.2 引入带留痕的 adjustment 表。</li>
+    </ul>
+  </div>
+
+  <!-- ===== 五、API 设计 ===== -->
+  <h1 class="heading" id="s5" data-level="1">五、API 设计（/api/v1）</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">全部接口挂载在 <code>/api/v1/</code> 前缀下——现在多打 4 个字符，将来接口演进（v0.2 加考试、任务）时新旧版本可并存，客户端不必同步升级。除登录与静态页面外，均需会话 Cookie。</p>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">学员端接口</div>
+    <table class="table">
+      <colgroup><col style="width:16%;"><col style="width:34%;"><col style="width:50%;"></colgroup>
+      <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>POST</td><td><code>/api/v1/auth/login</code></td><td>工号+密码登录；连续 5 次失败锁定 10 分钟（防爆破）</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/auth/logout</code></td><td>登出，结束当前学习会话</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/me</code></td><td>当前用户信息与首登改密标记</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/me/password</code></td><td>修改本人密码</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/courses</code></td><td>上架课程列表（含个人累计秒数、断点、达标状态）</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/courses/&#123;id&#125;/file</code></td><td>课程 PDF 流式下载（Range 支持，供阅读器分页加载）</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/study/start</code></td><td>开始/恢复学习，返回会话 id 与断点位置</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/study/heartbeat</code></td><td>心跳上报（核心接口，见下文协议）</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/study/confirm</code></td><td>防挂机弹窗确认应答</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/study/stop</code></td><td>主动结束本次学习段（关页/切走触发）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-caption">管理端接口（role=admin 校验）</div>
+    <table class="table">
+      <colgroup><col style="width:16%;"><col style="width:34%;"><col style="width:50%;"></colgroup>
+      <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>POST</td><td><code>/api/v1/admin/roster/import</code></td><td>Excel 名册导入（新增+更新，返回导入统计）</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/admin/roster/template</code></td><td>下载名册 Excel 模板</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/admin/courses</code></td><td>课程库总览（含文件指纹、上下架状态）</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/admin/courses/scan</code></td><td>手动触发课程文件夹扫描（平时自动）</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/admin/export/personal</code></td><td>导出个人学时明细 xlsx（可按部门/时间段过滤）</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/admin/export/summary</code></td><td>导出部门/班组学时汇总 xlsx</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/admin/overview</code></td><td>学时总览表数据（管理端首页表格）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="heading" data-level="2">5.1 心跳协议（学习引擎核心报文）</h2>
+  <pre class="code"><span class="cm"># 请求：前端每 15 秒一次</span>
+POST /api/v1/study/heartbeat
+{
+  "session_id": 1024,
+  "last_position": {"page": 12, "ratio": 0.45},
+  "visible": true          <span class="cm"># 页面当前是否前台可见</span>
+}
+
+<span class="cm"># 响应：服务端返回权威累计值，前端只做展示不自行累计</span>
+{
+  "gained_seconds": 15,        <span class="cm"># 本次心跳认可的有效秒数</span>
+  "total_seconds": 1860,       <span class="cm"># 该课程累计有效秒数（服务端口径）</span>
+  "required_seconds": 7200,    <span class="cm"># 达标线（来自课程配置）</span>
+  "completed": false,
+  "challenge": null            <span class="cm"># 需要弹窗时返回 {"token": "c-8f3a", "timeout_s": 120}</span>
+}</pre>
+
+  <div class="doc-section">
+    <ul class="list">
+      <li>所有接口返回统一包裹结构 <code>{"code": 0, "data": ..., "msg": ""}</code>；错误码分段：4xxx 客户端（如 4101 未登录、4202 弹窗超时）、5xxx 服务端。</li>
+      <li>心跳接口幂等且服务端权威：间隔合法性、弹窗状态、单日上限全部由服务端裁决，前端传值仅作参考。</li>
+      <li>管理端导出接口直接流式返回 xlsx 文件，同时在 export_logs 落一条记录。</li>
+    </ul>
+  </div>
+
+  <!-- ===== 六、学习引擎 ===== -->
+  <h1 class="heading" id="s6" data-level="1">六、学习引擎设计（计时 / 防挂机 / 断点）</h1>
+
+  <h2 class="heading" data-level="2">6.1 计时口径：服务端权威计时</h2>
+  <div class="doc-section">
+    <p class="paragraph">有效学时完全不信任前端时钟。前端每 15 秒发一次心跳，服务端以"收到心跳的服务端时间差"为唯一计时依据：</p>
+  </div>
+  <pre class="code"><span class="cm"># 单次心跳的有效时长计算（服务端逻辑）</span>
+delta = now_server - last_heartbeat_at        <span class="cm"># 服务端时钟差</span>
+if delta &lt;= 0:            gained = 0           <span class="cm"># 时钟回拨/重放，不计</span>
+elif delta &gt; max_gap:     gained = 0           <span class="cm"># 断线超长间隔（默认 60s），本段不计</span>
+elif session_paused:      gained = 0           <span class="cm"># 弹窗超时暂停期间，不计</span>
+else:                     gained = delta       <span class="cm"># 正常：15s 间隔计 15s</span>
+total_seconds += min(gained, daily_remaining) <span class="cm"># 单日计入上限默认 8 小时</span></pre>
+
+  <div class="doc-section">
+    <ul class="list">
+      <li><strong>切屏暂停：</strong>前端监听 <code>visibilitychange</code> 与 <code>blur</code>，页面不可见即停发心跳；服务端超过 max_gap 收不到心跳自动结束该学习段（end_reason=timeout）。前后端双保险。</li>
+      <li><strong>断网容忍：</strong>前端把发送失败的心跳缓存在内存，恢复后携带 <code>since</code> 时间戳重发；但服务端只认连续性——中断超过 max_gap 的部分照例不计，断网不白学也不虚增。</li>
+      <li><strong>单日上限：</strong>每人单日计入学时默认上限 8 小时（可配置），防"挂夜"刷学时；这也是检查时最常被问的口径。</li>
+    </ul>
+  </div>
+
+  <h2 class="heading" data-level="2">6.2 防挂机：随机挑战状态机</h2>
+  <div class="doc-section">
+    <p class="paragraph">弹窗是学时可信的关键机制，状态机设计如下：</p>
+    <ul class="list">
+      <li><strong>触发：</strong>服务端在心跳响应中按随机间隔（90~180 秒，可配置）下发 challenge 令牌，前端收到即弹出"我在学习"确认框。</li>
+      <li><strong>应答：</strong>学员点击确认 → 前端调 <code>/study/confirm</code> 携带令牌 → 服务端校验令牌有效且未超时（默认 120 秒）→ 计时继续。</li>
+      <li><strong>超时：</strong>120 秒未确认 → 会话进入 paused 状态，此后心跳的 gained 一律为 0；重新确认后恢复。本段 confirm_miss 加 1，台账中可见。</li>
+      <li><strong>防作弊细节：</strong>令牌服务端生成、一次性使用、与会话绑定；确认间隔过短（如 1 秒内连续应答）视为异常但不惩罚，只记录——v0.1 保持"记录可查"而非"逻辑反作弊"，避免误伤真实用户。</li>
+      <li><strong>参数全部进配置文件：</strong>触发间隔、应答时限、单日上限、心跳间隔。检查口径变了改配置，不改代码。</li>
+    </ul>
+  </div>
+
+  <h2 class="heading" data-level="2">6.3 断点续学与达标判定</h2>
+  <div class="doc-section">
+    <ul class="list">
+      <li>断点 = PDF 页码 + 滚动比例，随心跳上报写入 <code>study_records.last_position</code>；下次进入课程从断点打开。</li>
+      <li>达标判定在服务端： <code>total_seconds >= required_minutes × 60</code> 时，记录置为 completed 并写入达标时间；之后继续学习仍累计（超额学时也如实记录），但状态不再变化。</li>
+      <li>文件被替换导致课程重新登记时，同名课程的累计记录保留（视为同一课程的新版本），达标状态按新配置重新判定。</li>
+    </ul>
+  </div>
+
+  <!-- ===== 七、课程库与文件处理 ===== -->
+  <h1 class="heading" id="s7" data-level="1">七、课程库与文件处理</h1>
+
+  <div class="doc-section">
+    <ul class="list">
+      <li><strong>目录即课程库：</strong>课程根目录 <code>data/courses/</code>，支持子目录按"项目部/主题"分一层（子目录名作为课程分类导出列，仅此一层，不递归更深）。</li>
+      <li><strong>扫描机制：</strong>进程内定时器每 5 分钟扫描一次 + 管理端手动触发。以文件名为唯一键：新文件登记上架；文件被修改（mtime/hash 变化）更新指纹并保留学习记录；文件消失则下架（不删课程行，历史学时保留）。</li>
+      <li><strong>PPT 处理（v0.1 约定）：</strong>浏览器无法直接预览 PPT，v0.1 约定"管理员统一另存为 PDF 后放入"；服务端自动转换（LibreOffice headless）作为可选开关，默认关闭——它给部署增加一个外部依赖，不符合"最小可用"原则，留待 v0.2 评估。</li>
+      <li><strong>下载安全：</strong>文件路径由数据库 id 解析，接口不接受用户输入的路径参数，杜绝路径穿越；下载走流式响应并支持 Range（手机阅读器分页加载大 PDF）。</li>
+      <li><strong>类型与大小限制：</strong>仅 <code>.pdf</code> 入库；单文件上限 100MB（可配置）；非白名单扩展名扫描时跳过并记录日志。</li>
+    </ul>
+  </div>
+
+  <pre class="code">data/
+├── app.db              <span class="cm"># SQLite 主库（WAL 模式）</span>
+├── courses/            <span class="cm"># 课程库（管理员拷入 PDF 即上架）</span>
+│   ├── 高处作业/
+│   │   └── 登高作业安全要点.pdf
+│   └── 有限空间/
+│       └── 人孔井作业安全规范.pdf
+├── backups/            <span class="cm"># 每日自动备份（保留 30 天）</span>
+└── logs/               <span class="cm"># 应用日志（按天滚动）</span></pre>
+
+  <!-- ===== 八、配置设计 ===== -->
+  <h1 class="heading" id="s8" data-level="1">八、配置设计</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">所有"法规会变、口径会调"的参数一律进配置文件（<code>config.yaml</code>），启动加载、改动重启生效。配置即合规口径的唯一定义点：</p>
+  </div>
+
+  <pre class="code"><span class="cm"># config.yaml —— 学时规则与运行参数</span>
+server:
+  host: 192.168.10.50        <span class="cm"># 内网监听地址</span>
+  port: 8000
+
+study:                        <span class="cm"># 学时有效性核心参数</span>
+  heartbeat_interval_s: 15    <span class="cm"># 前端心跳间隔</span>
+  max_gap_s: 60               <span class="cm"># 超过此间隔的心跳差值不计学时</span>
+  challenge_min_s: 90         <span class="cm"># 防挂机弹窗随机下限</span>
+  challenge_max_s: 180        <span class="cm"># 防挂机弹窗随机上限</span>
+  challenge_timeout_s: 120    <span class="cm"># 弹窗应答时限，超时暂停计时</span>
+  daily_cap_hours: 8          <span class="cm"># 单日计入学时上限</span>
+
+roster:
+  initial_password: employee_no   <span class="cm"># 初始密码=工号</span>
+  force_change_password: true     <span class="cm"># 首登强制改密</span>
+
+courses:
+  allowed_ext: [pdf]
+  max_file_mb: 100
+  scan_interval_min: 5
+
+backup:
+  daily_at: "02:30"           <span class="cm"># 每日备份时间</span>
+  retain_days: 30</pre>
+
+  <!-- ===== 九、安全设计 ===== -->
+  <h1 class="heading" id="s9" data-level="1">九、安全设计</h1>
+
+  <div class="doc-section">
+    <ul class="list">
+      <li><strong>认证与会话：</strong>bcrypt 哈希存储；会话 Cookie HttpOnly + SameSite=Lax + 服务端签名（防伪造）；连续 5 次登录失败锁定 10 分钟；首登强制改密（初始密码=工号，全员工号在企业内半公开，必须改）。</li>
+      <li><strong>越权防护：</strong>学员端接口全部带 user 上下文，只能读写自己的学习数据；管理端接口统一 <code>role=admin</code> 依赖注入校验。</li>
+      <li><strong>文件安全：</strong>下载路径由 id 反查数据库，无用户可控路径；扩展名白名单；文件名在响应头做 RFC 5987 编码（中文文件名兼容）。</li>
+      <li><strong>台账防篡改：</strong>学习明细只增不改；累计值仅能由心跳引擎写入；导出留痕（export_logs）。达到"数据可解释、操作可追溯"——这是内网自用场景下合理的安全水位，不引入区块链式防篡改等过度设计。</li>
+      <li><strong>传输安全：</strong>默认内网明文 HTTP，边界由内网隔离保障；提供自签 HTTPS 的可选配置（建议启用，成本仅一张自签证书）。平台不出内网、无外网依赖。</li>
+      <li><strong>个人信息最小化：</strong>仅收集工号、姓名、部门；不留手机号等额外信息（字段仅预留、不入数据）。</li>
+    </ul>
+  </div>
+
+  <!-- ===== 十、部署与运维 ===== -->
+  <h1 class="heading" id="s10" data-level="1">十、部署与运维</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">部署规格</div>
+    <table class="table">
+      <colgroup><col style="width:24%;"><col style="width:76%;"></colgroup>
+      <thead><tr><th>项目</th><th>要求</th></tr></thead>
+      <tbody>
+        <tr><td>服务器</td><td>1 台内网服务器/虚拟机：4 核 CPU、8GB 内存、100GB 磁盘（课程库+备份余量充足）；Windows Server 或 Linux 均可</td></tr>
+        <tr><td>网络</td><td>企业内网可达（含项目部经 VPN），固定内网 IP，防火墙仅放行服务端口</td></tr>
+        <tr><td>进程托管</td><td>Windows：NSSM 注册为系统服务，开机自启、崩溃自动拉起；Linux：systemd unit（Restart=always）</td></tr>
+        <tr><td>备份</td><td>每日 02:30 用 SQLite 在线备份 API（VACUUM INTO）导出快照至 data/backups，保留 30 天；课程文件夹每周整体复制一次至备份盘</td></tr>
+        <tr><td>日志</td><td>应用日志按天滚动保留 90 天；学习段明细本身即审计日志（数据库内）</td></tr>
+        <tr><td>升级发布</td><td>停止服务 → 备份数据库 → 覆盖代码目录 → 启动；全程约 5 分钟，窗口选非学习时段</td></tr>
+        <tr><td>监控</td><td>v0.1 从简：服务心跳页 <code>/healthz</code>（返回进程状态+数据库连通），管理员浏览器收藏即可；不做告警系统</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 十一、升级路径 ===== -->
+  <h1 class="heading" id="s11" data-level="1">十一、升级路径与成本评估</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">升级成本控制的核心思路：<strong>不在 400 人规模下预支用不上的架构，但用极低廉的结构预留，把每次升级变成"加法"。</strong>下面两张表分别回答"什么时候要花钱"和"现在留了什么接口"。</p>
+  </div>
+
+  <h2 class="heading" data-level="2">11.1 触发条件与升级成本</h2>
+
+  <div class="table-wrap">
+    <div class="table-caption">升级触发条件、动作与预估成本</div>
+    <table class="table">
+      <colgroup>
+        <col style="width:22%;">
+        <col style="width:22%;">
+        <col style="width:36%;">
+        <col style="width:20%;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>升级项</th>
+          <th>触发条件</th>
+          <th>动作</th>
+          <th>预估成本</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>v0.2 功能模块（考试 / 任务派发 / 证书台账）</td>
+          <td>业务需要（产品设计文档已规划）</td>
+          <td>同库加表、新增 API 与页面，不动现有架构；证书台账复用名册导入管道</td>
+          <td>每模块 1~2 人周</td>
+        </tr>
+        <tr>
+          <td>SQLite → PostgreSQL</td>
+          <td>并发 &gt; 500 人，或出现多机部署、高频报表等需求</td>
+          <td>ORM 已抽象方言，改连接串 + Alembic 迁移 + 数据搬运脚本 + 回归测试</td>
+          <td>2~3 人日</td>
+        </tr>
+        <tr>
+          <td>接入统一身份（LDAP/AD / 企业微信）</td>
+          <td>公司推统一身份认证</td>
+          <td>auth provider 接口新增适配器，账号映射用 external_id 预留字段</td>
+          <td>2~3 人日</td>
+        </tr>
+        <tr>
+          <td>视频课程</td>
+          <td>v0.3 评估立项</td>
+          <td>存储扩容（NAS）+ FFmpeg 转码任务 + H5 播放器组件；courses 表 media 字段已预留</td>
+          <td>1~2 人周 + 存储硬件</td>
+        </tr>
+        <tr>
+          <td>移动端体验增强（微信内打开等）</td>
+          <td>学员使用反馈强烈</td>
+          <td>适配微信内置浏览器与公众号跳转，纯前端改造</td>
+          <td>3~5 人日</td>
+        </tr>
+        <tr>
+          <td>多法人/多基地隔离</td>
+          <td>组织架构重大变化（目前明确无需求）</td>
+          <td>多租户改造（数据加 org 维度），届时重估——<strong>不预留</strong></td>
+          <td>1~2 人月</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="heading" data-level="2">11.2 现在就做的低成本预留（决策清单）</h2>
+
+  <div class="table-wrap">
+    <div class="table-caption">预留清单：每条成本以"小时"计，却省掉未来"周"级返工</div>
+    <table class="table">
+      <colgroup><col style="width:12%;"><col style="width:44%;"><col style="width:44%;"></colgroup>
+      <thead><tr><th>编号</th><th>决策</th><th>省掉的未来成本</th></tr></thead>
+      <tbody>
+        <tr><td>R1</td><td>API 全部挂 <code>/api/v1/</code> 前缀，响应统一包裹结构</td><td>接口演进时新旧版本并存，客户端不必一次性升级</td></tr>
+        <tr><td>R2</td><td>数据访问走 SQLAlchemy 2.0，SQL 不用 SQLite 专有函数</td><td>数据库迁移从"重写数据层"降为"改配置+搬数据"</td></tr>
+        <tr><td>R3</td><td>认证收敛到独立 auth 模块（login/logout/校验三个函数）</td><td>对接 LDAP/AD 只写一个适配器</td></tr>
+        <tr><td>R4</td><td>users 表预留 mobile / external_id，courses 表预留 media 字段</td><td>加字段在生产库上是高风险操作，预留则零成本</td></tr>
+        <tr><td>R5</td><td>学时规则（心跳/弹窗/上限/达标线）全部配置化</td><td>法规或检查口径调整时改配置不改代码</td></tr>
+        <tr><td>R6</td><td>累计表与明细留痕表分离，明细只增不改</td><td>任何口径升级都能用历史明细重算，数据永远可解释</td></tr>
+        <tr><td>R7</td><td>文件访问统一走 storage 模块（本地目录实现）</td><td>将来迁 NAS/对象存储只换实现类</td></tr>
+        <tr><td>R8</td><td>业务逻辑与框架解耦（service 层独立，路由薄封装）</td><td>加 v0.2 模块时直接横向扩展 service，不碰学习引擎</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="callout" data-variant="quote">
+    <p><strong>升级成本总判断：</strong>从 v0.1 出发，v0.2 全部功能（考试、任务派发、证书台账）在现有架构内即可完成，无需任何基础设施变更；只有在企业规模翻倍或上视频课程时，才第一次需要动基础设施（数据库或存储），而这两步都因 R1~R8 的预留而被压缩到"人日"级。这就是 400 人规模下的最优成本曲线。</p>
+  </aside>
+
+  <!-- ===== 十二、里程碑 ===== -->
+  <h1 class="heading" id="s12" data-level="1">十二、开发里程碑（3 周）</h1>
+
+  <ol class="timeline">
+    <li>
+      <strong>第 1 周 · 骨架与数据</strong>
+      <p>FastAPI 骨架 + 配置加载 + 5 张表建模；Excel 名册导入（含模板、去重、初始密码）；登录会话与首登改密；课程文件夹扫描上架。里程碑：管理员能导入名册、放入课程并在列表看到。</p>
+    </li>
+    <li>
+      <strong>第 2 周 · 学习引擎（核心）</strong>
+      <p>课程列表页与 PDF 阅读（断点续学）；心跳计时 + 服务端口径；防挂机挑战状态机；切屏暂停与断网容忍；单日上限。里程碑：手机完成一次完整学习，断网、切屏、挂机三种场景计时全部正确。</p>
+    </li>
+    <li>
+      <strong>第 3 周 · 台账与交付</strong>
+      <p>管理端总览页；个人明细/部门汇总两种 xlsx 导出 + 导出留痕；每日备份任务；NSSM/systemd 服务化部署；安全项收尾（锁定、路径穿越、HTTPS 可选）。里程碑：按产品文档三条验收标准逐条演练通过，试点一个项目部上线。</p>
+    </li>
+  </ol>
+
+  <div class="doc-section">
+    <p class="paragraph">测试策略与里程碑并行：学习引擎的计时口径（间隔边界、弹窗暂停、单日上限、断网重放）全部写成自动化测试用例先行——这是全系统唯一"错不起"的模块，其余模块以接口联调 + 手工验收为主。</p>
+  </div>
+
+  <!-- ===== 十三、风险与对策 ===== -->
+  <h1 class="heading" id="s13" data-level="1">十三、风险与对策</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">主要风险清单</div>
+    <table class="table">
+      <colgroup><col style="width:26%;"><col style="width:14%;"><col style="width:60%;"></colgroup>
+      <thead><tr><th>风险</th><th>等级</th><th>对策</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>极端并发超过估算（全员同一天集中学习）</td>
+          <td>低</td>
+          <td>SQLite WAL 仍有十倍余量；文档下载走 Range 分块；真超限则限流排队（学时场景可接受），再往后才是数据库升级</td>
+        </tr>
+        <tr>
+          <td>手机浏览器后台行为差异（iOS 切后台杀计时、息屏）</td>
+          <td>中</td>
+          <td>设计上"切走即暂停"本就是合规口径；关键是回到前台后 15 秒内恢复心跳，实测覆盖微信内置浏览器 + 主流国产浏览器</td>
+        </tr>
+        <tr>
+          <td>PPT 直接上架无法预览</td>
+          <td>中</td>
+          <td>上架约定写进管理员操作卡（转 PDF 再放入）；扫描器对 PPT 文件给出明确的"待转换"提示；自动转换留 v0.2 开关</td>
+        </tr>
+        <tr>
+          <td>单机磁盘故障丢数据</td>
+          <td>低</td>
+          <td>每日数据库快照 + 每周课程库复制至备份盘；快照保留 30 天可回溯；恢复演练纳入交付清单</td>
+        </tr>
+        <tr>
+          <td>初始密码=工号的安全暴露面</td>
+          <td>中</td>
+          <td>首登强制改密 + 失败锁定；内网边界 + 不出外网；管理端可一键重置为随机密码</td>
+        </tr>
+        <tr>
+          <td>台账口径被质疑（"学时怎么算的"）</td>
+          <td>中</td>
+          <td>计时口径写在导出台账的附页（参数表），弹窗记录随明细导出——口径透明是最好的抗质疑手段</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+
+  <!-- ===== 尾页 ===== -->
+  <section class="title end_page">
+    <h1>单机轻栈跑通主线，结构预留管住未来</h1>
+    <p>400 人规模下，复杂度预算只花在"学时可信"一件事上；<br>八条预留把 v0.2 的每一项升级都变成加法，而不是重写。</p>
+    <p style="margin-top:12px;">安全生产在线培训平台 · v0.1 技术设计文档 · 2026-10-08</p>
+  </section>
+
+</body>
+</html>
