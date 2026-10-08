@@ -1,0 +1,44 @@
+# 安全生产在线培训平台 v0.1 配置文件
+# 学时规则与合规口径的唯一定义点：法规或检查口径调整时改配置、不改代码（§8）
+
+server:
+  host: "0.0.0.0"      # 内网监听地址，按服务器实际内网 IP 调整
+  port: 8000
+
+data_dir: "data"       # 数据目录：app.db / courses / backups / logs
+
+secret_key: ""         # 会话签名密钥；留空则首次启动自动生成并保存到 data/secret.key
+
+study:                 # 学时有效性核心参数（§6）
+  heartbeat_interval_s: 15     # 前端心跳间隔（秒）
+  max_gap_s: 60                # 超过此间隔的心跳差值不计学时
+  challenge_min_s: 90          # 防挂机弹窗随机触发下限（秒）
+  challenge_max_s: 180         # 防挂机弹窗随机触发上限（秒）
+  challenge_timeout_s: 120     # 弹窗应答时限，超时暂停计时
+  daily_cap_hours: 8           # 单日计入学时上限（小时）
+
+roster:                # 名册与账号（§3.1 / §9）
+  initial_password: "employee_no"  # 初始密码策略：employee_no=工号；或填固定字符串
+  force_change_password: true      # 首登强制改密（初始密码=工号在厂内半公开，必须改）
+
+admin:                 # 引导管理员：首次启动自动创建，用于第一次导入名册
+  employee_no: "admin"
+  name: "系统管理员"
+  password: "admin@2026"
+
+courses:               # 课程库（§7）
+  allowed_ext: [pdf]
+  max_file_mb: 100
+  scan_interval_min: 5
+  default_required_minutes: 60    # 未在 registry 登记的课程默认达标学时（分钟）
+  registry: {}                    # 按文件名登记课程名称与达标学时，示例：
+  # registry:
+  #   高处作业/登高作业安全要点.pdf:
+  #     title: 登高作业安全要点
+  #     required_minutes: 60
+  #   人孔井作业安全规范.pdf:
+  #     required_minutes: 30
+
+backup:                # 备份（§10）
+  daily_at: "02:30"
+  retain_days: 30

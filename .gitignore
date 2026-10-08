@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+pytest_cache/
+
+# 运行数据（数据库/课程/备份/日志不入库）
+data/
+
+# 临时与日志
+.temp/
+*.log
+debug.log

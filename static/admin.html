@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全生产在线培训平台 · 管理端</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+  color:#1f2d3d;line-height:1.7;background:linear-gradient(160deg,#f8fafc 0,#ffffff 45%,#cfe0f5 100%);
+  min-height:100vh;-webkit-font-smoothing:antialiased}
+.topbar{background:linear-gradient(135deg,#1e3a5f,#3b82f6);color:#fff;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:1px}
+.topbar .user{font-size:13px;opacity:.92;display:flex;align-items:center;gap:12px}
+.btn{border:none;border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer;
+  background:#3b82f6;color:#fff;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:rgba(255,255,255,.18)}
+.btn.small{padding:5px 12px;font-size:13px}
+.btn.plain{background:#e8f0fe;color:#1e3a5f}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+.card.login{max-width:380px;margin:10vh auto 0}
+.card{background:#fff;border-radius:14px;padding:24px;margin-bottom:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.card h2{font-size:16px;color:#0f1e33;margin-bottom:14px;padding-left:10px;
+  border-left:4px solid #3b82f6}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:#5b6b80;margin-bottom:5px}
+.field input,.field select{padding:9px 10px;border:1px solid #c9d6f3;border-radius:8px;
+  font-size:14px;outline:none;background:#f8fafc}
+.field input:focus,.field select:focus{border-color:#3b82f6;background:#fff}
+.err{color:#c0392b;font-size:13px;min-height:20px;margin-bottom:8px;text-align:center}
+.btn-block{width:100%;padding:12px;font-size:15px}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.stat{flex:1;min-width:150px;background:#fff;border-radius:12px;padding:16px 18px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);border-top:3px solid #3b82f6}
+.stat b{display:block;font-size:24px;color:#1e3a5f;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:#5b6b80}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row .field{margin-bottom:0}
+.result{font-size:13px;color:#0e7a4e;margin-top:10px;min-height:18px}
+.result.bad{color:#c0392b}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#c9d6f3;color:#0f1e33;text-align:left;padding:9px 10px;
+  border-bottom:2px solid #dbe4ef;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #eef2f8;white-space:nowrap}
+tr:hover td{background:#f4f7fb}
+.tbl-wrap{overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid #e6edf6;border-radius:10px}
+.badge{font-size:12px;border-radius:6px;padding:1px 9px}
+.badge.on{background:#e6f7ef;color:#0e7a4e}
+.badge.off{background:#fdecea;color:#c0392b}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:100;
+  background:#0f1e33;color:#fff;font-size:13.5px;border-radius:8px;padding:10px 20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none;max-width:86vw}
+.toast.show{opacity:1}
+.empty{text-align:center;color:#8a97ab;padding:26px 0;font-size:13.5px}
+a.link{color:#2563eb;font-size:13px;text-decoration:none}
+a.link:hover{text-decoration:underline}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="topbar" class="topbar" hidden>
+  <h1>安全生产在线培训平台 · 管理端</h1>
+  <div class="user"><span id="hello"></span><button class="btn ghost small" onclick="logout()">退出</button></div>
+</div>
+<div class="wrap">
+
+  <!-- 登录 -->
+  <div id="view-login" class="card login">
+    <h2 style="text-align:center;border:none;padding:0;margin-bottom:16px">管理员登录</h2>
+    <div class="field"><label>工号</label><input id="login-no" autocomplete="username"></div>
+    <div class="field"><label>密码</label><input id="login-pw" type="password" autocomplete="current-password"></div>
+    <div id="login-err" class="err"></div>
+    <button class="btn btn-block" onclick="login()">登 录</button>
+  </div>
+
+  <!-- 主视图 -->
+  <div id="view-main" hidden>
+    <div class="stats">
+      <div class="stat"><b id="stat-users">—</b><span>在册人数</span></div>
+      <div class="stat"><b id="stat-courses">—</b><span>上架课程</span></div>
+      <div class="stat"><b id="stat-total">—</b><span>累计学时（分钟）</span></div>
+      <div class="stat"><b id="stat-today">—</b><span>今日学时（分钟）</span></div>
+    </div>
+
+    <div class="card">
+      <h2>名册管理</h2>
+      <div class="row">
+        <div class="field"><label>选择名册 Excel（工号/姓名/部门/角色）</label>
+          <input type="file" id="rosterFile" accept=".xlsx"></div>
+        <button class="btn" onclick="importRoster()">导入名册</button>
+        <a class="btn plain" href="/api/v1/admin/roster/template">下载模板</a>
+      </div>
+      <div id="rosterResult" class="result"></div>
+    </div>
+
+    <div class="card">
+      <h2>课程库（目录即上架：将 PDF 拷入服务器 data/courses/ 文件夹）</h2>
+      <div class="row">
+        <button class="btn" onclick="scanCourses()">立即扫描课程库</button>
+        <span style="font-size:12.5px;color:#5b6b80">系统每 5 分钟自动扫描一次；PPT 请先另存为 PDF 再放入</span>
+      </div>
+      <div id="scanResult" class="result"></div>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table><thead><tr>
+          <th>课程名称</th><th>分类</th><th>达标学时(分)</th><th>大小(MB)</th><th>指纹</th><th>状态</th>
+        </tr></thead><tbody id="courseRows"><tr><td colspan="6" class="empty">尚未扫描</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>学时台账导出</h2>
+      <div class="row">
+        <div class="field"><label>部门/班组</label>
+          <select id="fltDept" style="min-width:170px"><option value="">全部部门</option></select></div>
+        <div class="field"><label>开始日期</label><input id="fltFrom" type="date"></div>
+        <div class="field"><label>结束日期</label><input id="fltTo" type="date"></div>
+        <button class="btn" onclick="doExport('personal','xlsx')">导出个人台账(xlsx)</button>
+        <button class="btn" onclick="doExport('summary','xlsx')">导出部门汇总(xlsx)</button>
+        <button class="btn plain" onclick="doExport('personal','csv')">个人明细(csv)</button>
+        <button class="btn plain" onclick="doExport('summary','csv')">部门汇总(csv)</button>
+      </div>
+      <div class="result" id="exportResult">导出为 Excel/CSV，可直接作为安全检查的台账交付物；每次导出系统自动留痕。</div>
+    </div>
+
+    <div class="card">
+      <h2>学时总览</h2>
+      <div class="tbl-wrap">
+        <table><thead><tr>
+          <th>工号</th><th>姓名</th><th>部门/班组</th><th>角色</th><th>累计学时(分)</th>
+          <th>今日(分)</th><th>学习课程数</th><th>达标数</th><th>最近学习</th>
+        </tr></thead><tbody id="overviewRows"><tr><td colspan="9" class="empty">加载中…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>导出留痕（最近 50 条）</h2>
+      <div class="tbl-wrap">
+        <table><thead><tr>
+          <th>时间</th><th>操作人</th><th>类型</th><th>范围</th><th>行数</th>
+        </tr></thead><tbody id="logRows"><tr><td colspan="5" class="empty">加载中…</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var user = null;
+
+function api(path, opts){
+  opts = opts || {};
+  opts.credentials = "same-origin";
+  opts.headers = Object.assign({"Content-Type": "application/json"}, opts.headers || {});
+  return fetch("/api/v1" + path, opts).then(function(r){
+    return r.json().catch(function(){ return {code:-1, msg:"网络异常"}; });
+  }).then(function(j){
+    if (j.code === 4101) { showLogin(); throw j; }
+    if (j.code !== 0) { throw j; }
+    return j.data;
+  });
+}
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 2800);
+}
+function esc(s){ return String(s||"").replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function showLogin(){ user = null; $("view-main").hidden = true; $("topbar").hidden = true; $("view-login").hidden = false; }
+
+/* ---------- 登录 ---------- */
+function login(){
+  var no = $("login-no").value.trim(), pw = $("login-pw").value;
+  $("login-err").textContent = "";
+  if (!no || !pw) { $("login-err").textContent = "请输入工号和密码"; return; }
+  api("/auth/login", {method:"POST", body: JSON.stringify({employee_no:no, password:pw})})
+    .then(function(u){
+      if (u.role !== "admin") { $("login-err").textContent = "该账号不是管理员，请使用管理员工号登录"; return; }
+      user = u; enterMain();
+    })
+    .catch(function(j){ $("login-err").textContent = j.msg || "登录失败"; });
+}
+$("login-pw").addEventListener("keydown", function(e){ if (e.key === "Enter") login(); });
+function logout(){ api("/auth/logout", {method:"POST", body:"{}"}).catch(function(){}); showLogin(); }
+
+function enterMain(){
+  $("view-login").hidden = true;
+  $("view-main").hidden = false;
+  $("topbar").hidden = false;
+  $("hello").textContent = user.name + "（管理员）";
+  loadOverview();
+  loadCourses();
+  loadLogs();
+}
+
+/* ---------- 总览 ---------- */
+function loadOverview(){
+  api("/admin/overview").then(function(d){
+    $("stat-users").textContent = d.total_users;
+    $("stat-courses").textContent = d.active_courses;
+    $("stat-total").textContent = d.total_minutes;
+    $("stat-today").textContent = d.today_minutes;
+    var sel = $("fltDept"), cur = sel.value;
+    sel.innerHTML = '<option value="">全部部门</option>' +
+      d.departments.map(function(x){ return '<option value="'+esc(x)+'">'+esc(x)+'</option>'; }).join("");
+    sel.value = cur;
+    var rows = d.users.map(function(u){
+      return "<tr><td>" + esc(u.employee_no) + "</td><td>" + esc(u.name) + "</td><td>" + esc(u.department)
+        + "</td><td>" + (u.role === "admin" ? "管理员" : "学员") + "</td><td>" + u.total_minutes
+        + "</td><td>" + u.today_minutes + "</td><td>" + u.course_count + "</td><td>" + u.completed_count
+        + "</td><td>" + esc(u.last_study_at) + "</td></tr>";
+    }).join("");
+    $("overviewRows").innerHTML = rows || '<tr><td colspan="9" class="empty">暂无员工，请先导入名册</td></tr>';
+  }).catch(function(j){ toast(j.msg || "总览加载失败"); });
+}
+
+/* ---------- 课程库 ---------- */
+function loadCourses(){
+  api("/admin/courses").then(function(list){
+    if (!list.length) { $("courseRows").innerHTML = '<tr><td colspan="6" class="empty">课程库为空：请将 PDF 拷入 data/courses/ 后点击扫描</td></tr>'; return; }
+    $("courseRows").innerHTML = list.map(function(c){
+      return "<tr><td>" + esc(c.title) + "</td><td>" + esc(c.category) + "</td><td>" + c.required_minutes
+        + "</td><td>" + c.file_size_mb + "</td><td title='文件指纹'>" + esc(c.file_hash) + "…</td><td>"
+        + (c.status === 1 ? '<span class="badge on">上架</span>' : '<span class="badge off">下架</span>')
+        + "</td></tr>";
+    }).join("");
+  }).catch(function(j){ toast(j.msg || "课程库加载失败"); });
+}
+function scanCourses(){
+  api("/admin/courses/scan", {method:"POST", body:"{}"}).then(function(stats){
+    var el = $("scanResult");
+    el.className = "result";
+    el.textContent = "扫描完成：新上架 " + stats.added + "，更新 " + stats.updated
+      + "，下架 " + stats.removed + "，当前上架 " + stats.active + " 门"
+      + (stats.skipped_ext ? "（跳过非 PDF " + stats.skipped_ext + " 个）" : "");
+    loadCourses(); loadOverview();
+  }).catch(function(j){ var el = $("scanResult"); el.className = "result bad"; el.textContent = j.msg || "扫描失败"; });
+}
+
+/* ---------- 名册导入 ---------- */
+function importRoster(){
+  var f = $("rosterFile").files[0];
+  var el = $("rosterResult");
+  el.className = "result"; el.textContent = "";
+  if (!f) { el.className = "result bad"; el.textContent = "请先选择名册 Excel 文件"; return; }
+  var fd = new FormData();
+  fd.append("file", f, f.name);
+  fetch("/api/v1/admin/roster/import", {method:"POST", body: fd, credentials:"same-origin"})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (j.code !== 0) { el.className = "result bad"; el.textContent = j.msg || "导入失败"; return; }
+      el.textContent = "导入完成：共 " + j.data.total + " 行，新增 " + j.data.created
+        + "，更新 " + j.data.updated + "，跳过 " + j.data.skipped;
+      $("rosterFile").value = "";
+      loadOverview();
+    })
+    .catch(function(){ el.className = "result bad"; el.textContent = "导入失败：网络异常"; });
+}
+
+/* ---------- 导出 ---------- */
+function doExport(type, format){
+  var dept = encodeURIComponent($("fltDept").value || "");
+  var from = encodeURIComponent($("fltFrom").value || "");
+  var to = encodeURIComponent($("fltTo").value || "");
+  var url = "/api/v1/admin/export/" + type + "?format=" + format
+    + "&department=" + dept + "&date_from=" + from + "&date_to=" + to;
+  // 触发浏览器下载（同源 Cookie 自动携带）
+  var a = document.createElement("a");
+  a.href = url; document.body.appendChild(a); a.click(); a.remove();
+  $("exportResult").className = "result";
+  $("exportResult").textContent = "已请求导出" + (type === "personal" ? "个人台账" : "部门汇总")
+    + "（" + (format === "csv" ? "CSV" : "Excel") + "），若浏览器未开始下载请稍候重试";
+  setTimeout(loadLogs, 1200);
+}
+
+/* ---------- 导出留痕 ---------- */
+function loadLogs(){
+  api("/admin/export/logs").then(function(list){
+    if (!list.length) { $("logRows").innerHTML = '<tr><td colspan="5" class="empty">暂无导出记录</td></tr>'; return; }
+    $("logRows").innerHTML = list.map(function(e){
+      return "<tr><td>" + esc(e.created_at) + "</td><td>" + esc(e.operator) + "</td><td>" + esc(e.export_type)
+        + "</td><td>" + esc(e.scope) + "</td><td>" + e.row_count + "</td></tr>";
+    }).join("");
+  }).catch(function(){});
+}
+
+/* ---------- 初始化 ---------- */
+(function init(){
+  api("/me").then(function(u){
+    if (u.role !== "admin") { showLogin(); return; }
+    user = u; enterMain();
+  }).catch(function(){ showLogin(); });
+})();
+</script>
+</body>
+</html>

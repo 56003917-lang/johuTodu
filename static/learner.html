@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全生产在线培训平台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+  color:#1f2d3d;line-height:1.7;background:linear-gradient(160deg,#f8fafc 0,#ffffff 45%,#cfe0f5 100%);
+  min-height:100vh;-webkit-font-smoothing:antialiased}
+.topbar{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#1e3a5f,#3b82f6);
+  color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:1px}
+.topbar .user{font-size:13px;opacity:.92;display:flex;align-items:center;gap:12px}
+.btn{border:none;border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer;
+  background:#3b82f6;color:#fff;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:rgba(255,255,255,.18)}
+.btn.small{padding:5px 12px;font-size:13px}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+.card{background:#fff;border-radius:14px;padding:26px 24px;margin:0 auto 16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.card.login{max-width:380px;margin-top:8vh}
+.card h2{font-size:18px;color:#0f1e33;margin-bottom:18px;text-align:center}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:#5b6b80;margin-bottom:6px}
+.field input{width:100%;padding:11px 12px;border:1px solid #c9d6f3;border-radius:8px;
+  font-size:15px;outline:none;background:#f8fafc}
+.field input:focus{border-color:#3b82f6;background:#fff}
+.err{color:#c0392b;font-size:13px;min-height:20px;margin-bottom:8px;text-align:center}
+.ok-tip{color:#0e7a4e;font-size:13px;text-align:center;margin-bottom:8px}
+.btn-block{width:100%;padding:12px;font-size:15px}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 14px}
+.section-title h2{font-size:17px;color:#0f1e33}
+.section-title span{font-size:12.5px;color:#5b6b80}
+.course{background:#fff;border-radius:12px;padding:18px 18px 14px;margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);border-top:3px solid #3b82f6}
+.course .row1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.course h3{font-size:15.5px;color:#0f1e33;margin-bottom:4px}
+.course .cat{font-size:11.5px;color:#2563eb;background:#e8f0fe;border-radius:20px;padding:1px 10px}
+.course .meta{font-size:12.5px;color:#5b6b80;margin:6px 0}
+.badge{font-size:12px;border-radius:6px;padding:2px 10px;white-space:nowrap}
+.badge.done{background:#e6f7ef;color:#0e7a4e}
+.badge.doing{background:#fff7e6;color:#b45309}
+.badge.todo{background:#eef1f6;color:#5b6b80}
+.progress{height:8px;background:#e8f0fe;border-radius:6px;overflow:hidden;margin:8px 0 6px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:6px}
+.course .foot{display:flex;justify-content:space-between;align-items:center}
+.course .foot .m{font-size:12px;color:#5b6b80}
+/* 阅读器 */
+.reader-top{position:sticky;top:0;z-index:9;background:#fff;border-bottom:1px solid #dbe4ef;
+  padding:10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.reader-top .title{flex:1;font-size:14.5px;font-weight:600;color:#0f1e33;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer{font-variant-numeric:tabular-nums;font-size:14px;color:#1e3a5f;background:#e8f0fe;
+  border-radius:8px;padding:4px 12px;white-space:nowrap}
+.timer.paused{background:#fdecea;color:#c0392b}
+.page-nav{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;
+  font-size:13px;color:#5b6b80;background:#f4f7fb;border-bottom:1px solid #e6edf6}
+.page-nav input{width:56px;padding:4px 6px;border:1px solid #c9d6f3;border-radius:6px;
+  text-align:center;font-size:13px}
+.pdf-box{background:#525659;height:calc(100vh - 210px);min-height:420px}
+.pdf-box iframe{width:100%;height:100%;border:none}
+.opennew{display:block;text-align:center;font-size:13px;color:#2563eb;padding:10px;
+  background:#fff;border-top:1px solid #e6edf6}
+/* 防挂机弹窗 */
+.overlay{position:fixed;inset:0;z-index:99;background:rgba(15,30,51,.45);
+  display:flex;align-items:center;justify-content:center}
+.overlay[hidden]{display:none}
+.modal{background:#fff;border-radius:14px;padding:28px 30px;width:min(320px,88vw);
+  text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.modal .icon{font-size:34px;margin-bottom:6px}
+.modal h3{font-size:17px;color:#0f1e33;margin-bottom:6px}
+.modal p{font-size:13.5px;color:#5b6b80;margin-bottom:16px}
+.modal .countdown{font-size:13px;color:#b45309;margin-top:10px}
+.modal .btn{width:100%;padding:12px;font-size:15px}
+.paused-bar{position:fixed;left:0;right:0;bottom:0;z-index:98;background:#fdecea;color:#c0392b;
+  text-align:center;font-size:13.5px;padding:8px;border-top:1px solid #f5c6c0}
+.paused-bar b{cursor:pointer;text-decoration:underline;margin-left:8px}
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:100;
+  background:#0f1e33;color:#fff;font-size:13.5px;border-radius:8px;padding:10px 20px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none;max-width:86vw}
+.toast.show{opacity:1}
+.empty{text-align:center;color:#8a97ab;font-size:14px;padding:40px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="topbar" class="topbar" hidden>
+  <h1>安全生产在线培训</h1>
+  <div class="user"><span id="hello"></span><button class="btn ghost small" onclick="logout()">退出</button></div>
+</div>
+<div class="wrap">
+
+  <!-- 登录 -->
+  <div id="view-login" class="card login">
+    <h2>员工登录</h2>
+    <div class="field"><label>工号</label><input id="login-no" placeholder="请输入工号" autocomplete="username"></div>
+    <div class="field"><label>密码</label><input id="login-pw" type="password" placeholder="初始密码默认为工号" autocomplete="current-password"></div>
+    <div id="login-err" class="err"></div>
+    <button class="btn btn-block" onclick="login()">登 录</button>
+    <p class="ok-tip" style="margin-top:14px">通信建设工程施工 · 内部培训学时记录平台</p>
+  </div>
+
+  <!-- 首登改密 -->
+  <div id="view-pwd" class="card login" hidden>
+    <h2>首次登录 · 修改密码</h2>
+    <p class="ok-tip">初始密码为工号，为保障账号安全请先设置新密码</p>
+    <div class="field"><label>原密码</label><input id="pwd-old" type="password"></div>
+    <div class="field"><label>新密码（至少 6 位）</label><input id="pwd-new" type="password"></div>
+    <div class="field"><label>确认新密码</label><input id="pwd-new2" type="password"></div>
+    <div id="pwd-err" class="err"></div>
+    <button class="btn btn-block" onclick="changePwd()">保存并继续</button>
+  </div>
+
+  <!-- 课程列表 -->
+  <div id="view-courses" hidden>
+    <div class="section-title">
+      <h2>课程列表</h2><span>学时自动累计 · 弹窗需及时确认</span>
+    </div>
+    <div id="courseList"><div class="empty">加载中…</div></div>
+  </div>
+</div>
+
+<!-- 阅读器（全屏视图） -->
+<div id="view-reader" hidden>
+  <div class="reader-top">
+    <button class="btn ghost small" onclick="closeReader()">‹ 返回</button>
+    <div class="title" id="reader-title"></div>
+    <div class="timer" id="timer">已学 0:00:00</div>
+  </div>
+  <div class="page-nav">
+    <button class="btn small" onclick="pageStep(-1)">上一页</button>
+    第 <input id="pageNum" value="1" onchange="pageGo()"> 页
+    <button class="btn small" onclick="pageStep(1)">下一页</button>
+    <span>翻页会自动记录学习进度</span>
+  </div>
+  <div class="pdf-box"><iframe id="pdfFrame" title="课程文档"></iframe></div>
+  <a class="opennew" id="openNew" target="_blank" rel="noopener">在新窗口打开 PDF（手机端如无法预览时使用）</a>
+  <div id="pausedBar" class="paused-bar" hidden>防挂机确认超时，计时已暂停<b onclick="resumeNow()">点此恢复</b></div>
+  <div id="challengeOverlay" class="overlay" hidden>
+    <div class="modal">
+      <div class="icon">🕐</div>
+      <h3>请确认您正在学习</h3>
+      <p id="challengeText">点击下方按钮继续计时，超时将暂停记录学时</p>
+      <button class="btn" id="btnConfirm" onclick="confirmChallenge()">我在学习</button>
+      <div class="countdown" id="challengeCountdown"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var user = null, courses = [], curCourse = null, session = null;
+var hbTimer = null, cdTimer = null, shownToken = null, page = 1, totalSeconds = 0;
+
+function api(path, opts){
+  opts = opts || {};
+  opts.credentials = "same-origin";
+  opts.headers = Object.assign({"Content-Type": "application/json"}, opts.headers || {});
+  return fetch("/api/v1" + path, opts).then(function(r){
+    return r.json().catch(function(){ return {code:-1, msg:"网络异常，请稍后重试"}; });
+  }).then(function(j){
+    if (j.code === 4101) { showLogin(); throw j; }
+    if (j.code !== 0) { throw j; }
+    return j.data;
+  });
+}
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+function show(view){
+  ["view-login","view-pwd","view-courses"].forEach(function(v){ $(v).hidden = (v !== view); });
+  $("view-reader").hidden = true;
+  $("topbar").hidden = (view === "view-login");
+}
+function showLogin(){
+  user = null; session = null; stopHb();
+  document.cookie = "tp_session=; Max-Age=0; path=/";
+  show("view-login");
+}
+
+/* ---------- 登录 / 改密 ---------- */
+function login(){
+  var no = $("login-no").value.trim(), pw = $("login-pw").value;
+  $("login-err").textContent = "";
+  if (!no || !pw) { $("login-err").textContent = "请输入工号和密码"; return; }
+  api("/auth/login", {method:"POST", body: JSON.stringify({employee_no:no, password:pw})})
+    .then(function(u){
+      user = u;
+      if (u.must_change_pwd) { show("view-pwd"); }
+      else { enterMain(); }
+    })
+    .catch(function(j){ $("login-err").textContent = j.msg || "登录失败"; });
+}
+$("login-pw").addEventListener("keydown", function(e){ if (e.key === "Enter") login(); });
+
+function changePwd(){
+  var oldpw = $("pwd-old").value, n1 = $("pwd-new").value, n2 = $("pwd-new2").value;
+  $("pwd-err").textContent = "";
+  if (!oldpw) { $("pwd-err").textContent = "请输入原密码"; return; }
+  if (n1.length < 6) { $("pwd-err").textContent = "新密码至少 6 位"; return; }
+  if (n1 !== n2) { $("pwd-err").textContent = "两次输入的新密码不一致"; return; }
+  api("/me/password", {method:"POST", body: JSON.stringify({old_password:oldpw, new_password:n1})})
+    .then(function(){ user.must_change_pwd = false; toast("密码修改成功"); enterMain(); })
+    .catch(function(j){ $("pwd-err").textContent = j.msg || "修改失败"; });
+}
+
+function enterMain(){
+  $("hello").textContent = user.name + "（" + user.department + "）";
+  show("view-courses");
+  loadCourses();
+}
+function logout(){
+  stopHb();
+  api("/auth/logout", {method:"POST", body:"{}"}).catch(function(){});
+  showLogin();
+}
+
+/* ---------- 课程列表 ---------- */
+function fmt(sec){
+  sec = Math.max(0, sec|0);
+  var h = (sec/3600)|0, m = ((sec%3600)/60)|0, s = sec%60;
+  return h + ":" + ("0"+m).slice(-2) + ":" + ("0"+s).slice(-2);
+}
+function loadCourses(){
+  $("courseList").innerHTML = '<div class="empty">加载中…</div>';
+  api("/courses").then(function(list){
+    courses = list;
+    if (!list.length) { $("courseList").innerHTML = '<div class="empty">暂无上架课程，请联系管理员放入课程文件</div>'; return; }
+    var html = "";
+    list.forEach(function(c){
+      var badge = c.completed ? '<span class="badge done">已完成</span>'
+        : (c.total_seconds > 0 ? '<span class="badge doing">学习中</span>' : '<span class="badge todo">未开始</span>');
+      html += '<div class="course">'
+        + '<div class="row1"><div><h3>' + esc(c.title) + '</h3><div class="meta">分类：' + esc(c.category)
+        + ' · 达标 ' + c.required_minutes + ' 分钟 · 上次 ' + (c.last_study_at || "未学过") + '</div></div>' + badge + '</div>'
+        + '<div class="progress"><i style="width:' + c.percent + '%"></i></div>'
+        + '<div class="foot"><span class="m">已学 ' + fmt(c.total_seconds) + ' / ' + fmt(c.required_seconds)
+        + '（' + c.percent + '%）</span>'
+        + '<button class="btn small" onclick="openCourse(' + c.id + ')">'
+        + (c.total_seconds > 0 ? "继续学习" : "开始学习") + '</button></div></div>';
+    });
+    $("courseList").innerHTML = html;
+  }).catch(function(j){ $("courseList").innerHTML = '<div class="empty">' + esc(j.msg || "加载失败") + "</div>"; });
+}
+function esc(s){ return String(s||"").replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+/* ---------- 阅读与计时 ---------- */
+function openCourse(id){
+  curCourse = null;
+  for (var i = 0; i < courses.length; i++) if (courses[i].id === id) curCourse = courses[i];
+  api("/study/start", {method:"POST", body: JSON.stringify({course_id:id})}).then(function(data){
+    session = data;
+    totalSeconds = data.total_seconds;
+    page = (data.last_position && data.last_position.page) || 1;
+    $("reader-title").textContent = curCourse.title;
+    $("pageNum").value = page;
+    $("openNew").href = "/api/v1/courses/" + id + "/file";
+    $("pdfFrame").src = "/api/v1/courses/" + id + "/file#page=" + page;
+    $("timer").textContent = "已学 " + fmt(totalSeconds);
+    $("timer").classList.remove("paused");
+    $("pausedBar").hidden = true;
+    hideChallenge();
+    $("view-reader").hidden = false;   // 阅读器为独立全屏视图
+    ["view-login","view-pwd","view-courses"].forEach(function(v){ $(v).hidden = true; });
+    startHb();
+  }).catch(function(j){ toast(j.msg || "无法开始学习"); });
+}
+function closeReader(){
+  stopSession("normal");
+  $("view-reader").hidden = true;
+  show("view-courses");
+  loadCourses();
+}
+function startHb(){
+  stopHb();
+  hbTimer = setInterval(tick, (session.heartbeat_interval_s || 15) * 1000);
+  tick(); // 立即同步一次
+}
+function stopHb(){ if (hbTimer) { clearInterval(hbTimer); hbTimer = null; } }
+
+function tick(){
+  if (!session) return;
+  // 页面不可见即停发心跳（切屏暂停：前后端双保险）
+  api("/study/heartbeat", {method:"POST", body: JSON.stringify({
+    session_id: session.session_id,
+    last_position: {page: page, ratio: null},
+    visible: !document.hidden
+  })}).then(function(d){
+    if (!session) return;
+    totalSeconds = d.total_seconds;
+    $("timer").textContent = "已学 " + fmt(totalSeconds);
+    if (d.paused) {
+      $("timer").classList.add("paused");
+      $("pausedBar").hidden = false;
+    } else {
+      $("timer").classList.remove("paused");
+      $("pausedBar").hidden = true;
+    }
+    if (d.challenge) { showChallenge(d.challenge); }
+    else { hideChallenge(); }
+  }).catch(function(j){
+    if (j && j.code === 4201) {
+      // 学习段已被服务端封口（断线超时/重启）：静默重新开课，继续累计
+      stopHb();
+      api("/study/start", {method:"POST", body: JSON.stringify({course_id: session.course_id})})
+        .then(function(data){ session = data; totalSeconds = data.total_seconds; startHb(); })
+        .catch(function(){ closeReader(); });
+    } else if (j && j.code === 4101) {
+      showLogin();
+    } else if (j && j.msg) {
+      toast(j.msg);
+    }
+  });
+}
+document.addEventListener("visibilitychange", function(){
+  if (!session) return;
+  if (document.hidden) { stopHb(); }   // 切走即暂停（合规口径）
+  else { startHb(); }                  // 回到前台 15 秒内恢复心跳
+});
+window.addEventListener("pagehide", function(){ if (session) stopSession("normal", true); });
+window.addEventListener("beforeunload", function(){ if (session) stopSession("normal", true); });
+
+function stopSession(reason, keepalive){
+  if (!session) return;
+  var sid = session.session_id;
+  var body = JSON.stringify({session_id: sid, last_position: {page: page, ratio: null}, reason: reason});
+  var opts = {method: "POST", body: body, credentials: "same-origin",
+              headers: {"Content-Type": "application/json"}};
+  if (keepalive) opts.keepalive = true;
+  if (!keepalive) session = null; // 页内调用立即置空，避免后续心跳
+  stopHb();
+  fetch("/api/v1/study/stop", opts).catch(function(){});
+}
+
+/* ---------- 防挂机弹窗 ---------- */
+function showChallenge(ch){
+  if (shownToken === ch.token) return;  // 同一令牌不重复弹
+  shownToken = ch.token;
+  $("challengeOverlay").hidden = false;
+  $("btnConfirm").textContent = "我在学习";
+  countdown(ch.timeout_s);
+}
+function hideChallenge(){
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+  shownToken = null;
+  $("challengeOverlay").hidden = true;
+}
+function countdown(sec){
+  if (cdTimer) clearInterval(cdTimer);
+  var left = sec;
+  function render(){
+    if (left <= 0) { $("challengeCountdown").textContent = "已超时，计时暂停中"; return; }
+    $("challengeCountdown").textContent = "剩余 " + left + " 秒";
+    left--;
+  }
+  render();
+  cdTimer = setInterval(render, 1000);
+}
+function confirmChallenge(){
+  if (!session || !shownToken) { hideChallenge(); return; }
+  var sid = session.session_id, token = shownToken;
+  $("btnConfirm").disabled = true;
+  api("/study/confirm", {method:"POST", body: JSON.stringify({session_id: sid, token: token})})
+    .then(function(d){
+      $("btnConfirm").disabled = false;
+      hideChallenge();
+      $("pausedBar").hidden = true;
+      $("timer").classList.remove("paused");
+      totalSeconds = d.total_seconds;
+      $("timer").textContent = "已学 " + fmt(totalSeconds);
+      toast(d.resumed ? "已恢复计时" : "已确认，继续计时");
+    })
+    .catch(function(j){
+      $("btnConfirm").disabled = false;
+      hideChallenge();
+      toast(j.msg || "确认失败");
+      tick(); // 刷新最新状态
+    });
+}
+function resumeNow(){
+  if (shownToken) { confirmChallenge(); }
+  else { tick(); }
+}
+
+/* ---------- 页码步进（断点续学） ---------- */
+function pageStep(d){
+  var n = Math.max(1, (page|0) + d);
+  page = n; $("pageNum").value = n;
+  if (curCourse) $("pdfFrame").src = "/api/v1/courses/" + curCourse.id + "/file#page=" + n;
+}
+function pageGo(){
+  var n = parseInt($("pageNum").value, 10);
+  if (!n || n < 1) { $("pageNum").value = page; return; }
+  page = n;
+  if (curCourse) $("pdfFrame").src = "/api/v1/courses/" + curCourse.id + "/file#page=" + n;
+}
+
+/* ---------- 初始化：探测会话 ---------- */
+(function init(){
+  api("/me").then(function(u){ user = u; user.must_change_pwd ? show("view-pwd") : enterMain(); })
+    .catch(function(){ showLogin(); });
+})();
+</script>
+</body>
+</html>
