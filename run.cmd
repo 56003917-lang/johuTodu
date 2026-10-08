@@ -1,5 +1,5 @@
 @echo off
-rem 安全生产在线培训平台 v0.1 启动脚本（Windows，生产用 NSSM 托管见 README）
+rem 安全生产在线培训平台 v0.1 启动脚本（Windows；生产环境建议用 NSSM 托管本脚本内的启动命令）
 chcp 65001 >nul
 cd /d "%~dp0"
 if not exist ".venv\Scripts\python.exe" (
