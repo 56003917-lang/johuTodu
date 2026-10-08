@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>主题切换示例</title>
+
+  <!-- 在渲染前应用已保存的主题，避免闪烁（FOUC） -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="page-header">
+    <h1>我的应用</h1>
+
+    <!-- 无障碍主题切换按钮 -->
+    <button
+      id="theme-toggle"
+      type="button"
+      class="theme-toggle"
+      aria-label="切换到深色主题"
+      aria-pressed="false"
+    >
+      <span class="theme-toggle__icon" aria-hidden="true">🌙</span>
+      <span class="theme-toggle__text">深色模式</span>
+    </button>
+  </header>
+
+  <main>
+    <p>页面内容……</p>
+  </main>
+
+  <script src="theme.js"></script>
+</body>
+</html>
