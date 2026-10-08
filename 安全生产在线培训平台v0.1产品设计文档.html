@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安全生产在线培训平台 v0.1 产品设计文档</title>
+<style>
+/* ========== Reset & Base ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { min-height: 100%; }
+body {
+  position: relative;
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", "Noto Sans SC", sans-serif;
+  color: #1f2d3d;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background: linear-gradient(160deg, #f8fafc 0%, #ffffff 45%, #cfe0f5 100%);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 35% at 12% 8%, rgba(255,255,255,0.55) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 88% 90%, rgba(255,255,255,0.45) 0%, transparent 55%);
+}
+body > * { position: relative; z-index: 1; }
+
+/* ========== 封面 Hero ========== */
+.title {
+  position: relative;
+  overflow: hidden;
+  padding: 56px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 50%, #4f8ef7 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+.title::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 82%, rgba(255,255,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 82% 18%, rgba(255,255,255,0.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+.title > * { position: relative; z-index: 1; }
+.title h1 { font-size: 28px; font-weight: 800; margin: 0 0 14px 0; letter-spacing: 1px; color: #ffffff; }
+.title .accent-line {
+  width: 48px; height: 3px; background: rgba(255,255,255,0.85);
+  margin: 0 auto 18px; border-radius: 2px;
+}
+.title p { font-size: 15px; color: rgba(255,255,255,0.85); margin: 0; line-height: 1.7; }
+
+/* ========== 章节标题 ========== */
+h1.heading {
+  font-size: 28px;
+  color: #0f1e33;
+  margin: 36px 0 16px 0;
+  font-weight: 700;
+  border-left: 4px solid #3b82f6;
+  padding-left: 16px;
+}
+h2.heading {
+  font-size: 22px;
+  color: #0f1e33;
+  margin: 28px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #c9d6f3;
+  font-weight: 600;
+}
+
+/* ========== 正文 / 列表 ========== */
+.paragraph { font-size: 15px; color: #1f2d3d; line-height: 1.8; margin: 0 0 16px 0; text-indent: 2em; }
+.list { margin: 0 0 16px 0; padding-left: 24px; font-size: 15px; color: #1f2d3d; line-height: 1.8; }
+.list li { margin-bottom: 8px; }
+.list li::marker { color: #3b82f6; }
+
+/* ========== 正文区卡片化容器 ========== */
+.doc-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin: 0 0 16px 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+.doc-section.alt { background: #e6edf6; box-shadow: none; }
+
+/* ========== callout ========== */
+.callout {
+  margin: 0 0 16px 0;
+  padding: 16px 24px;
+  background: #e8f0fe;
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+}
+.callout[data-variant="warning"] { background: #FFF3E0; border-left-color: #d97706; }
+.callout[data-variant="quote"]   { background: #f0fdfa; border-left-color: #14b8a6; }
+.callout p { font-size: 15px; color: #1f2d3d; margin: 0; line-height: 1.8; }
+
+/* ========== 表格 ========== */
+.table-wrap {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  overflow: hidden;
+  margin: 0 0 16px 0;
+}
+.table-caption {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #c9d6f3, #e8f0fe);
+  color: #0f1e33;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #dbe4ef;
+}
+table.table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+table.table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  background: #c9d6f3;
+  color: #0f1e33;
+  font-weight: 700;
+  border-bottom: 2px solid #dbe4ef;
+  word-break: break-word;
+}
+table.table tbody td { padding: 12px 16px; border-bottom: 1px solid #dbe4ef; color: #1f2d3d; word-break: break-word; }
+table.table tbody tr:last-child td { border-bottom: none; }
+table.table tbody tr:hover { background: #e8f0fe; }
+
+/* ========== timeline ========== */
+.timeline { list-style: none; padding: 0; margin: 0 0 16px 0; }
+.timeline li {
+  position: relative;
+  padding-left: 28px;
+  padding-bottom: 18px;
+  border-left: 2px solid #e8f0fe;
+  margin-left: 6px;
+}
+.timeline li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: -7px; top: 5px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #f4f7fb;
+  box-shadow: 0 0 0 2px #e8f0fe;
+}
+.timeline strong { font-size: 14px; color: #2563eb; }
+.timeline p { font-size: 15px; color: #1f2d3d; margin: 4px 0 0 0; line-height: 1.8; }
+
+/* ========== card ========== */
+.card-grid { display: flex; gap: 16px; margin: 0 0 16px 0; }
+.card {
+  flex: 1;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-top: 3px solid #3b82f6;
+}
+.card h3 { font-size: 18px; color: #0f1e33; margin: 0 0 8px 0; font-weight: 700; }
+.card p  { font-size: 14px; color: #5b6b80; margin: 0; line-height: 1.7; }
+
+/* ========== divider ========== */
+.divider { margin: 32px 0; text-align: center; user-select: none; }
+.divider .line {
+  display: inline-block;
+  width: 36px;
+  height: 1px;
+  vertical-align: middle;
+  background: linear-gradient(to right, transparent, #e8f0fe);
+}
+.divider .line:last-child { background: linear-gradient(to left, transparent, #e8f0fe); }
+.divider .diamond {
+  display: inline-block;
+  width: 8px; height: 8px;
+  margin: 0 12px;
+  vertical-align: middle;
+  transform: rotate(45deg);
+  background: #3b82f6;
+  border-radius: 1px;
+  box-shadow: 0 0 0 2px #f4f7fb;
+}
+
+/* ========== 尾页 ========== */
+.end_page {
+  margin-top: 24px;
+  padding: 56px 24px;
+  text-align: center;
+  background: linear-gradient(135deg, #c9d6f3 0%, #e8f0fe 100%);
+  border-radius: 16px;
+}
+.end_page h1 { font-size: 28px; color: #0f1e33; margin: 0 0 16px 0; font-weight: 800; }
+.end_page p  { font-size: 15px; color: #5b6b80; margin: 0; line-height: 1.8; }
+
+/* ========== 响应式 ========== */
+@media screen and (max-width: 600px) {
+  body { padding: 16px !important; }
+  h1 { font-size: 22px !important; }
+  h2 { font-size: 18px !important; }
+  h3 { font-size: 16px !important; }
+  .card-grid { flex-direction: column; }
+}
+
+/* ========== 打印优化 ========== */
+@media print {
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #f4f7fb;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body::before { display: none; }
+  .title, .end_page { border-radius: 0; box-shadow: none; }
+  .doc-section, .card, .table-wrap { box-shadow: none; border: 1px solid #dbe4ef; }
+  section { break-inside: auto !important; }
+}
+</style>
+</head>
+<body class="mode-doc" data-palette="ink-blue">
+
+  <!-- ===== 封面 ===== -->
+  <section class="title">
+    <h1>安全生产在线培训平台 v0.1 产品设计文档</h1>
+    <div class="accent-line"></div>
+    <p>通信建设工程施工企业 · 内部自用 · 培训学时记录工具<br>版本 v0.1 · 2026 年 10 月 8 日</p>
+  </section>
+
+  <!-- ===== 一、产品设计方向 ===== -->
+  <h1 class="heading" data-level="1">一、产品设计方向</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">产品定位：面向通信建设工程施工企业内部自用的安全生产培训学时记录工具。它不是"内容平台"，而是"合规记录引擎"——把"谁学了、学了什么、学了多久"变成可追溯、可导出的培训台账，满足监管部门对安全培训学时与记录的检查要求。</p>
+    <p class="paragraph">v0.1 的总纲一句话：员工点开资料学习，系统自动累计学时，管理员一键导出台账。所有功能取舍都围绕这条主线展开。</p>
+  </div>
+
+  <div class="card-grid" data-cols="2">
+    <div class="card">
+      <h3>合规留痕优先</h3>
+      <p>平台的存在理由是"如实记录"。三条不可再砍的底线：身份归属（知道是谁学的）、时长可信（自动计时＋防挂机）、一键导出（台账即交付物）。</p>
+    </div>
+    <div class="card">
+      <h3>最小可用</h3>
+      <p>能用文件夹解决的不做界面，能用约定解决的不做配置。整个系统＝1 个后端＋2 张页面，一周量级的开发规模。</p>
+    </div>
+  </div>
+  <div class="card-grid" data-cols="2">
+    <div class="card">
+      <h3>文档优先</h3>
+      <p>v0.1 只做 PDF/PPT 阅读计时，不上视频。视频托管与转码是最大的基础设施负担，留待后续按需补充。</p>
+    </div>
+    <div class="card">
+      <h3>零学习成本</h3>
+      <p>学员用手机浏览器打开即学，无需安装 APP、无需使用培训；管理员两个按钮完成全部管理动作。</p>
+    </div>
+  </div>
+
+  <aside class="callout" data-variant="tip">
+    <p><strong>合规依据：</strong>《安全生产法》第二十八条要求生产经营单位对安全培训情况如实记录；《生产经营单位安全培训规定》明确新上岗从业人员岗前培训不得少于 24 学时、每年组织再培训。平台的学时记录与台账导出，即对应这两条法定要求的直接交付物。</p>
+  </aside>
+
+  <!-- ===== 二、用户与角色 ===== -->
+  <h1 class="heading" data-level="1">二、用户与角色</h1>
+
+  <div class="table-wrap">
+    <div class="table-caption">v0.1 仅设两种固定角色</div>
+    <table class="table" data-caption="用户与角色">
+      <colgroup>
+        <col style="width:22%;">
+        <col style="width:36%;">
+        <col style="width:42%;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>角色</th>
+          <th>使用场景</th>
+          <th>核心操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>学员（一线作业、班组人员）</td>
+          <td>手机浏览器登录，利用班前班后碎片时间学习</td>
+          <td>登录 → 浏览课程列表 → 打开文档阅读，学时自动累计</td>
+        </tr>
+        <tr>
+          <td>管理员（安全管理中心）</td>
+          <td>PC 打开管理页，日常几乎零维护</td>
+          <td>Excel 导入名册；将课程文件放入文件夹；导出学时台账</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 三、主要功能 ===== -->
+  <h1 class="heading" data-level="1">三、主要功能</h1>
+
+  <h2 class="heading" data-level="2">3.1 名册与登录</h2>
+  <div class="doc-section">
+    <ul class="list">
+      <li>Excel 批量导入员工名册：工号、姓名、所属项目部／班组</li>
+      <li>导入即自动生成账号：账号＝工号，初始密码默认为工号（规则可在配置中调整）</li>
+      <li>仅"管理员／学员"两种固定身份，不做权限体系、不做自助注册与找回密码</li>
+    </ul>
+  </div>
+
+  <h2 class="heading" data-level="2">3.2 课程库：文件夹即上架</h2>
+  <div class="doc-section">
+    <ul class="list">
+      <li>课程库＝服务器上一个文件夹，管理员把 PDF/PPT 拷入即完成上架，无上传界面</li>
+      <li>课程名称与学时值在配置文件中登记，系统按文件名识别</li>
+      <li>内容方向贴合通信施工场景：高处作业（登塔／登杆）、有限空间（人孔／地下室）、动火作业、临时用电、通信线路与设备施工安全</li>
+    </ul>
+  </div>
+
+  <h2 class="heading" data-level="2">3.3 学习与计时（学时有效性核心）</h2>
+  <div class="doc-section">
+    <ul class="list">
+      <li>打开文档自动计时，切屏或关闭即暂停</li>
+      <li>断点续学：记住每门课程的阅读位置与累计时长</li>
+      <li>随机防挂机弹窗：学习过程中不定时弹出"我在"确认，超时不响应则暂停计时——这是学时记录可信度的关键机制</li>
+    </ul>
+  </div>
+
+  <h2 class="heading" data-level="2">3.4 学时台账导出</h2>
+  <div class="doc-section">
+    <ul class="list">
+      <li>个人学时明细：课程、日期、累计时长、防挂机确认记录，逐条可追溯</li>
+      <li>部门／班组汇总表：按项目部、班组汇总学时完成情况</li>
+      <li>一键导出 Excel/CSV，直接作为安全检查的台账交付物</li>
+    </ul>
+  </div>
+
+  <!-- ===== 四、页面与使用流程 ===== -->
+  <h1 class="heading" data-level="1">四、页面与使用流程</h1>
+
+  <div class="doc-section">
+    <p class="paragraph">整个系统只有两张页面：学员端为 H5 单页（登录 → 课程列表 → 在线阅读计时）；管理端为 PC 单页（学时总览表＋「导入名册」「导出台账」两个按钮）。</p>
+  </div>
+
+  <ol class="timeline">
+    <li>
+      <strong>第 1 步 · 导入名册</strong>
+      <p>管理员用 Excel 一键导入，账号自动生成</p>
+    </li>
+    <li>
+      <strong>第 2 步 · 放入课程</strong>
+      <p>将 PDF/PPT 拷入课程文件夹，在配置中登记学时值</p>
+    </li>
+    <li>
+      <strong>第 3 步 · 学员学习</strong>
+      <p>手机浏览器登录，阅读即计时，弹窗防挂机</p>
+    </li>
+    <li>
+      <strong>第 4 步 · 导出台账</strong>
+      <p>随时导出个人明细与部门汇总，应付检查</p>
+    </li>
+  </ol>
+
+  <!-- ===== 五、技术方向与部署 ===== -->
+  <h1 class="heading" data-level="1">五、技术方向与部署</h1>
+
+  <div class="doc-section alt">
+    <ul class="list">
+      <li>技术栈：FastAPI＋SQLite＋原生 H5（无前端框架依赖），与现有 Python 3.12 环境一致</li>
+      <li>部署形态：内网单机部署，无外网依赖，学员通过局域网或 VPN 访问</li>
+      <li>学时规则配置化：目标学时、计时参数写入配置文件，法规修订时只改配置、不改代码</li>
+      <li>实施节奏：预计 2～3 周完成开发并上线试用</li>
+    </ul>
+  </div>
+
+  <!-- ===== 六、范围边界 ===== -->
+  <h1 class="heading" data-level="1">六、v0.1 范围边界（明确不做）</h1>
+
+  <div class="doc-section">
+    <ul class="list">
+      <li>视频课程（转码、托管、播放器成本最大，二期再评估）</li>
+      <li>在线考试与补考（列入 v0.2）</li>
+      <li>任务派发与未完成催办（列入 v0.2）</li>
+      <li>证书台账与到期预警：安管 ABC 证、特种作业操作证统一台账（列入 v0.2）</li>
+      <li>人脸识别、手机 APP、多租户与计费（自用场景无需求）</li>
+      <li>特种作业取证培训、安管人员考核培训（需监管认可的培训机构资质，属另一赛道，不涉足）</li>
+    </ul>
+  </div>
+
+  <aside class="callout" data-variant="warning">
+    <p><strong>边界说明：</strong>平台仅做企业内部培训的学时记录，不对外承接取证类培训服务，因此不涉及培训机构资质门槛；自用范围内，导出的学时台账即可满足企业主体责任检查需求。</p>
+  </aside>
+
+  <!-- ===== 七、验收标准 ===== -->
+  <h1 class="heading" data-level="1">七、验收标准</h1>
+
+  <div class="doc-section">
+    <ol class="list">
+      <li>员工用手机浏览器完成一次完整学习，学时自动累计，记录不可手工修改</li>
+      <li>管理员一键导出含明细的学时台账（个人明细＋部门汇总）</li>
+      <li>防挂机弹窗生效：不响应确认弹窗时，计时暂停</li>
+    </ol>
+  </div>
+
+  <aside class="callout" data-variant="tip">
+    <p><strong>三条底线：</strong>身份归属、时长可信、可导出。比这更简的方案只剩"共享文件夹＋手工登记表"，但那就失去了做平台的意义。</p>
+  </aside>
+
+  <div class="divider"><span class="line"></span><span class="diamond"></span><span class="line"></span></div>
+
+  <!-- ===== 尾页 ===== -->
+  <section class="title end_page">
+    <h1>先跑起来，再迭代</h1>
+    <p>v0.1 的目标是把"学时记录"这条主线跑通，用真实使用验证价值；<br>考试、任务派发、证书台账按 v0.2 依次推进。</p>
+    <p style="margin-top:12px;">安全生产在线培训平台 · v0.1 产品设计文档 · 2026-10-08</p>
+  </section>
+
+</body>
+</html>
