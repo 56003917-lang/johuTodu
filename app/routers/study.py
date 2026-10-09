@@ -22,8 +22,9 @@ CHUNK = 64 * 1024
 
 
 @router.get("/courses")
-def list_courses(user: User = Depends(get_current_user), db=Depends(get_db)):
-    """上架课程列表（含个人累计秒数、断点、达标状态）。"""
+def list_courses(request: Request, user: User = Depends(get_current_user), db=Depends(get_db)):
+    """上架课程列表（含个人累计秒数、断点、达标状态与学时口径）。"""
+    mpc = request.app.state.settings.study.minutes_per_credit
     courses = db.query(Course).filter(Course.status == 1).order_by(Course.category, Course.title).all()
     records = {r.course_id: r for r in db.query(StudyRecord).filter(StudyRecord.user_id == user.id)}
     items = []
@@ -39,6 +40,7 @@ def list_courses(user: User = Depends(get_current_user), db=Depends(get_db)):
             "file_size": c.file_size,
             "required_minutes": c.required_minutes,
             "required_seconds": required,
+            "required_credits": round(c.required_minutes / mpc, 1),  # 达标学时（每 mpc 分钟=1 学时）
             "total_seconds": total,
             "percent": min(100, round(total * 100.0 / required, 1)) if required else 100,
             "completed": bool(r and r.status == "completed"),

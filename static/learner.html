@@ -239,9 +239,11 @@ function loadCourses(){
     list.forEach(function(c){
       var badge = c.completed ? '<span class="badge done">已完成</span>'
         : (c.total_seconds > 0 ? '<span class="badge doing">学习中</span>' : '<span class="badge todo">未开始</span>');
+      var cred = c.required_credits || 0;
+      var credText = (cred % 1 === 0 ? cred : cred.toFixed(1)) + " 学时";
       html += '<div class="course">'
         + '<div class="row1"><div><h3>' + esc(c.title) + '</h3><div class="meta">分类：' + esc(c.category)
-        + ' · 达标 ' + c.required_minutes + ' 分钟 · 上次 ' + (c.last_study_at || "未学过") + '</div></div>' + badge + '</div>'
+        + ' · 达标 ' + credText + ' · 上次 ' + (c.last_study_at || "未学过") + '</div></div>' + badge + '</div>'
         + '<div class="progress"><i style="width:' + c.percent + '%"></i></div>'
         + '<div class="foot"><span class="m">已学 ' + fmt(c.total_seconds) + ' / ' + fmt(c.required_seconds)
         + '（' + c.percent + '%）</span>'

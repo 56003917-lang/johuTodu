@@ -82,8 +82,8 @@ a.link:hover{text-decoration:underline}
     <div class="stats">
       <div class="stat"><b id="stat-users">—</b><span>在册人数</span></div>
       <div class="stat"><b id="stat-courses">—</b><span>上架课程</span></div>
-      <div class="stat"><b id="stat-total">—</b><span>累计学时（分钟）</span></div>
-      <div class="stat"><b id="stat-today">—</b><span>今日学时（分钟）</span></div>
+      <div class="stat"><b id="stat-total">—</b><span>累计学时</span></div>
+      <div class="stat"><b id="stat-today">—</b><span>今日学时</span></div>
     </div>
 
     <div class="card">
@@ -106,7 +106,7 @@ a.link:hover{text-decoration:underline}
       <div id="scanResult" class="result"></div>
       <div class="tbl-wrap" style="margin-top:10px">
         <table><thead><tr>
-          <th>课程名称</th><th>分类</th><th>达标学时(分)</th><th>大小(MB)</th><th>指纹</th><th>状态</th>
+          <th>课程名称</th><th>分类</th><th>达标学时</th><th>大小(MB)</th><th>指纹</th><th>状态</th>
         </tr></thead><tbody id="courseRows"><tr><td colspan="6" class="empty">尚未扫描</td></tr></tbody></table>
       </div>
     </div>
@@ -130,8 +130,8 @@ a.link:hover{text-decoration:underline}
       <h2>学时总览</h2>
       <div class="tbl-wrap">
         <table><thead><tr>
-          <th>工号</th><th>姓名</th><th>部门/班组</th><th>角色</th><th>累计学时(分)</th>
-          <th>今日(分)</th><th>学习课程数</th><th>达标数</th><th>最近学习</th>
+          <th>工号</th><th>姓名</th><th>部门/班组</th><th>角色</th><th>累计学时</th>
+          <th>今日学时</th><th>学习课程数</th><th>达标数</th><th>最近学习</th>
         </tr></thead><tbody id="overviewRows"><tr><td colspan="9" class="empty">加载中…</td></tr></tbody></table>
       </div>
     </div>
@@ -204,16 +204,16 @@ function loadOverview(){
   api("/admin/overview").then(function(d){
     $("stat-users").textContent = d.total_users;
     $("stat-courses").textContent = d.active_courses;
-    $("stat-total").textContent = d.total_minutes;
-    $("stat-today").textContent = d.today_minutes;
+    $("stat-total").textContent = d.total_credits;
+    $("stat-today").textContent = d.today_credits;
     var sel = $("fltDept"), cur = sel.value;
     sel.innerHTML = '<option value="">全部部门</option>' +
       d.departments.map(function(x){ return '<option value="'+esc(x)+'">'+esc(x)+'</option>'; }).join("");
     sel.value = cur;
     var rows = d.users.map(function(u){
       return "<tr><td>" + esc(u.employee_no) + "</td><td>" + esc(u.name) + "</td><td>" + esc(u.department)
-        + "</td><td>" + (u.role === "admin" ? "管理员" : "学员") + "</td><td>" + u.total_minutes
-        + "</td><td>" + u.today_minutes + "</td><td>" + u.course_count + "</td><td>" + u.completed_count
+        + "</td><td>" + (u.role === "admin" ? "管理员" : "学员") + "</td><td>" + u.total_credits
+        + "</td><td>" + u.today_credits + "</td><td>" + u.course_count + "</td><td>" + u.completed_count
         + "</td><td>" + esc(u.last_study_at) + "</td></tr>";
     }).join("");
     $("overviewRows").innerHTML = rows || '<tr><td colspan="9" class="empty">暂无员工，请先导入名册</td></tr>';
@@ -225,7 +225,7 @@ function loadCourses(){
   api("/admin/courses").then(function(list){
     if (!list.length) { $("courseRows").innerHTML = '<tr><td colspan="6" class="empty">课程库为空：请将 PDF 拷入 data/courses/ 后点击扫描</td></tr>'; return; }
     $("courseRows").innerHTML = list.map(function(c){
-      return "<tr><td>" + esc(c.title) + "</td><td>" + esc(c.category) + "</td><td>" + c.required_minutes
+      return "<tr><td>" + esc(c.title) + "</td><td>" + esc(c.category) + "</td><td>" + c.required_credits
         + "</td><td>" + c.file_size_mb + "</td><td title='文件指纹'>" + esc(c.file_hash) + "…</td><td>"
         + (c.status === 1 ? '<span class="badge on">上架</span>' : '<span class="badge off">下架</span>')
         + "</td></tr>";

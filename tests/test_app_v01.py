@@ -244,6 +244,7 @@ def test_config_defaults_per_doc():
     st = s.study
     assert (st.heartbeat_interval_s, st.max_gap_s, st.challenge_min_s,
             st.challenge_max_s, st.challenge_timeout_s, st.daily_cap_hours) == (15, 60, 90, 180, 120, 8)
+    assert st.minutes_per_credit == 30 and st.credit_seconds == 1800  # 每 30 分钟 = 1 学时
     assert s.allowed_ext == ("pdf",) and s.max_file_mb == 100 and s.scan_interval_min == 5
     assert s.initial_password == "employee_no" and s.force_change_password is True
     assert s.backup_daily_at == "02:30" and s.backup_retain_days == 30
@@ -776,15 +777,16 @@ def test_export_personal(env):
         ws1 = wb["个人学时台账"]
         assert ws1.max_row == 4  # 表头 + A001×2 + A002×1（A003 未学习不出现在课程台账）
         hdr = [c.value for c in ws1[1]]
-        assert hdr[:6] == ["工号", "姓名", "部门/班组", "课程", "课程分类", "累计学时(分钟)"]
+        assert hdr[:6] == ["工号", "姓名", "部门/班组", "课程", "课程分类", "累计学时"]
         row_a1 = [c.value for c in ws1[2]]
-        assert row_a1[0] == "A001" and row_a1[5] == "1.0"  # 60 秒 = 1.0 分钟
+        assert row_a1[0] == "A001" and row_a1[5] == "0.0"  # 60 秒 = 0.03 学时，不足 0.05 如实显示 0.0
         ws2 = wb["学习段明细"]
         assert ws2.max_row == 4  # 表头 + 3 个学习段
-        assert [c.value for c in ws2[1]][7] == "有效学时(分钟)"
+        assert [c.value for c in ws2[1]][7] == "有效学时"
         ws3 = wb["口径说明"]
         texts = " ".join(str(c.value) for row in ws3.iter_rows() for c in row if c.value)
         assert "服务端权威计时" in texts and "单日计入学时上限 8 小时" in texts, "口径说明附页缺失关键参数"
+        assert "每 30 分钟 = 1 学时" in texts, "学时换算口径未写入附页"
         # csv：utf-8-sig + 明细行
         r = e.client.get("/api/v1/admin/export/personal?format=csv")
         text = r.content.decode("utf-8-sig")
@@ -832,11 +834,11 @@ def test_export_summary(env):
         assert rows[0][0] == "部门/班组"
         data = {r[0]: r for r in rows[1:-1]}
         assert rows[-1][0] == "合计"
-        # 一项目部：A001 两门 120s + A003 0s = 2 分钟；二项目部：A002 30s = 0.5 分钟
-        assert data["一项目部"][2] == "2.0", data["一项目部"]
-        assert data["二项目部"][2] == "0.5", data["二项目部"]
+        # 一项目部：A001 两门 120s + A003 0s = 0.1 学时；二项目部：A002 30s = 0.0 学时（不足 0.05 如实显示）
+        assert data["一项目部"][2] == "0.1", data["一项目部"]
+        assert data["二项目部"][2] == "0.0", data["二项目部"]
         assert data["一项目部"][1] == 2 and data["二项目部"][1] == 1
-        assert rows[-1][2] == "2.5"
+        assert rows[-1][2] == "0.1"
         # csv
         r = e.client.get("/api/v1/admin/export/summary?format=csv")
         text = r.content.decode("utf-8-sig")
@@ -859,10 +861,10 @@ def test_overview(env):
         d = j["data"]
         assert d["total_users"] == 4  # admin + 3 学员
         assert d["active_courses"] == 2
-        assert d["total_minutes"] == 2  # 150 秒 ≈ 2 分钟（整除）
+        assert d["total_credits"] == 0.1  # 150 秒 ≈ 0.08 学时，保留 1 位小数
         users = {u["employee_no"]: u for u in d["users"]}
-        assert users["A001"]["course_count"] == 2 and users["A001"]["total_minutes"] == 2
-        assert users["A002"]["course_count"] == 1 and users["A002"]["total_minutes"] == 0
+        assert users["A001"]["course_count"] == 2 and users["A001"]["total_credits"] == 0.1
+        assert users["A002"]["course_count"] == 1 and users["A002"]["total_credits"] == 0.0
         assert users["A003"]["course_count"] == 0 and users["A003"]["last_study_at"] == "—"
         assert set(d["departments"]) == {"一项目部", "二项目部", "安全管理中心"}
         # 部门过滤

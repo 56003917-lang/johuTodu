@@ -30,9 +30,13 @@ _TIP_FONT = Font(color="5B6B80", size=10)
 REASON_CN = {"normal": "正常结束", "timeout": "心跳超时", "logout": "退出登录", "offline": "服务重启", "": ""}
 
 
-def _fmt_minutes(seconds) -> str:
-    """秒 → 学时（分钟），保留 1 位小数：台账以分钟为口径。"""
-    return "%.1f" % (int(seconds or 0) / 60.0)
+def _fmt_credits(seconds, settings) -> str:
+    """秒 → 学时（每 N 分钟 = 1 学时，N 取自配置 minutes_per_credit），保留 1 位小数。
+
+    台账以学时为口径；不足 0.05 学时如实显示 0.0，不做夸大。
+    """
+    mpc = settings.study.minutes_per_credit
+    return "%.1f" % (int(seconds or 0) / 60.0 / mpc)
 
 
 def _scope_text(department: Optional[str], date_from: Optional[str], date_to: Optional[str]) -> str:
@@ -75,14 +79,14 @@ def _query_sessions(s, department, start, end):
     return q.all()
 
 
-def _sheet_records(ws, rows):
-    headers = ["工号", "姓名", "部门/班组", "课程", "课程分类", "累计学时(分钟)",
-               "达标学时(分钟)", "达标状态", "达标时间", "累计防挂机超时", "首次学习", "最近学习"]
+def _sheet_records(ws, rows, settings):
+    headers = ["工号", "姓名", "部门/班组", "课程", "课程分类", "累计学时",
+               "达标学时", "达标状态", "达标时间", "累计防挂机超时", "首次学习", "最近学习"]
     ws.append(headers)
     for rec, u, c in rows:
         ws.append([
             u.employee_no, u.name, u.department, c.title, c.category,
-            _fmt_minutes(rec.total_seconds), "%.0f" % c.required_minutes,
+            _fmt_credits(rec.total_seconds, settings), _fmt_credits(c.required_minutes * 60, settings),
             "已达标" if rec.status == "completed" else "学习中",
             fmt_local(rec.completed_at) or "—",
             rec.challenge_miss,
@@ -91,15 +95,15 @@ def _sheet_records(ws, rows):
     return len(rows)
 
 
-def _sheet_sessions(ws, rows):
+def _sheet_sessions(ws, rows, settings):
     headers = ["工号", "姓名", "部门/班组", "课程", "学习日期", "开始时间", "结束时间",
-               "有效学时(分钟)", "心跳次数", "防挂机确认成功", "防挂机超时", "结束原因"]
+               "有效学时", "心跳次数", "防挂机确认成功", "防挂机超时", "结束原因"]
     ws.append(headers)
     for sess, u, c in rows:
         ws.append([
             u.employee_no, u.name, u.department, c.title,
             fmt_local(sess.started_at, "%Y-%m-%d"), fmt_local(sess.started_at), fmt_local(sess.ended_at) or "进行中",
-            _fmt_minutes(sess.gained_seconds), sess.heartbeat_count,
+            _fmt_credits(sess.gained_seconds, settings), sess.heartbeat_count,
             sess.confirm_ok, sess.confirm_miss, REASON_CN.get(sess.end_reason or "", sess.end_reason or ""),
         ])
     return len(rows)
@@ -113,6 +117,7 @@ def _sheet_caliber(ws, settings: Settings, department, date_from, date_to):
     st = settings.study
     items = [
         ("计时方式", "服务端权威计时：以收到心跳的服务端时间差为唯一依据，不信任前端时钟"),
+        ("学时换算", "每 %d 分钟 = 1 学时（本台账学时数据均按此口径折算）" % st.minutes_per_credit),
         ("心跳间隔", "%d 秒/次" % st.heartbeat_interval_s),
         ("断线容忍", "心跳间隔超过 %d 秒的部分不计学时" % st.max_gap_s),
         ("切屏口径", "页面切至后台/不可见期间不计学时"),
@@ -155,12 +160,12 @@ def export_personal(db: Database, settings: Settings, operator_id: int,
             buf = io.StringIO()
             writer = csv.writer(buf)
             writer.writerow(["工号", "姓名", "部门/班组", "课程", "学习日期", "开始时间", "结束时间",
-                             "有效学时(分钟)", "心跳次数", "防挂机确认成功", "防挂机超时", "结束原因"])
+                             "有效学时", "心跳次数", "防挂机确认成功", "防挂机超时", "结束原因"])
             for sess, u, c in sess_rows:
                 writer.writerow([u.employee_no, u.name, u.department, c.title,
                                  fmt_local(sess.started_at, "%Y-%m-%d"), fmt_local(sess.started_at),
                                  fmt_local(sess.ended_at) or "进行中",
-                                 _fmt_minutes(sess.gained_seconds), sess.heartbeat_count,
+                                 _fmt_credits(sess.gained_seconds, settings), sess.heartbeat_count,
                                  sess.confirm_ok, sess.confirm_miss,
                                  REASON_CN.get(sess.end_reason or "", "")])
             content = ("\ufeff" + buf.getvalue()).encode("utf-8")  # BOM：Excel 直接打开不乱码
@@ -170,10 +175,10 @@ def export_personal(db: Database, settings: Settings, operator_id: int,
             wb = Workbook()
             ws1 = wb.active
             ws1.title = "个人学时台账"
-            _sheet_records(ws1, rec_rows)
+            _sheet_records(ws1, rec_rows, settings)
             _style_sheet(ws1, 12, [12, 10, 22, 24, 14, 14, 14, 10, 18, 14, 18, 18])
             ws2 = wb.create_sheet("学习段明细")
-            _sheet_sessions(ws2, sess_rows)
+            _sheet_sessions(ws2, sess_rows, settings)
             _style_sheet(ws2, 12, [12, 10, 22, 24, 12, 18, 18, 14, 10, 14, 12, 12])
             ws3 = wb.create_sheet("口径说明")
             _sheet_caliber(ws3, settings, department, date_from, date_to)
@@ -236,8 +241,9 @@ def export_summary(db: Database, settings: Settings, operator_id: int,
         for r in comp_q.all():
             completed_by_user[r.user_id] = completed_by_user.get(r.user_id, 0) + 1
 
-        header = ["部门/班组", "在册人数", "累计有效学时(分钟)", "人均学时(分钟)",
+        header = ["部门/班组", "在册人数", "累计有效学时", "人均学时",
                   "达标人次", "防挂机超时合计", "参与学习人数"]
+        mpc = settings.study.minutes_per_credit
         table = []
         for dept in sorted(dept_users.keys()):
             ulist = dept_users[dept]
@@ -246,14 +252,14 @@ def export_summary(db: Database, settings: Settings, operator_id: int,
             miss = sum(r.confirm_miss for uid in ids for r in sess_by_user.get(uid, []))
             done = sum(completed_by_user.get(uid, 0) for uid in ids)
             learners = sum(1 for uid in ids if sess_by_user.get(uid))
-            table.append([dept, len(ulist), _fmt_minutes(total_s),
-                          "%.1f" % (total_s / 60.0 / max(1, len(ulist))), done, miss, learners])
+            table.append([dept, len(ulist), _fmt_credits(total_s, settings),
+                          "%.1f" % (total_s / 60.0 / mpc / max(1, len(ulist))), done, miss, learners])
         total_row = ["合计", len(users),
-                     _fmt_minutes(sum(r.gained_seconds for rs in sess_by_user.values() for r in rs)),
-                     "%.1f" % (sum(r.gained_seconds for rs in sess_by_user.values() for r in rs) / 60.0 / max(1, len(users))),
-                     sum(completed_by_user.values()),
-                     sum(r.confirm_miss for rs in sess_by_user.values() for r in rs),
-                     sum(1 for uid in user_ids if sess_by_user.get(uid))]
+                      _fmt_credits(sum(r.gained_seconds for rs in sess_by_user.values() for r in rs), settings),
+                      "%.1f" % (sum(r.gained_seconds for rs in sess_by_user.values() for r in rs) / 60.0 / mpc / max(1, len(users))),
+                      sum(completed_by_user.values()),
+                      sum(r.confirm_miss for rs in sess_by_user.values() for r in rs),
+                      sum(1 for uid in user_ids if sess_by_user.get(uid))]
 
         if fmt == "csv":
             buf = io.StringIO()
@@ -294,7 +300,8 @@ def export_summary(db: Database, settings: Settings, operator_id: int,
 # ======================================================================
 # 管理端总览（首页表格数据）
 # ======================================================================
-def overview(db: Database, department=None) -> dict:
+def overview(db: Database, settings: Settings, department=None) -> dict:
+    mpc = settings.study.minutes_per_credit
     with db.session() as s:
         from sqlalchemy import case
         q = (s.query(
@@ -323,17 +330,18 @@ def overview(db: Database, department=None) -> dict:
 
         users = [{
             "employee_no": r[1], "name": r[2], "department": r[3], "role": r[4],
-            "total_minutes": int(r[5] or 0) // 60,
+            "total_credits": round((int(r[5] or 0) / 60.0 / mpc), 1),
             "course_count": int(r[6] or 0),
             "completed_count": int(r[7] or 0),
             "last_study_at": fmt_local(r[8]) if r[8] else "—",
-            "today_minutes": today_map.get(r[0], 0) // 60,
+            "today_credits": round(today_map.get(r[0], 0) / 60.0 / mpc, 1),
         } for r in rows]
         return {
             "users": users,
             "departments": departments,
             "total_users": len(users),
-            "total_minutes": sum(u["total_minutes"] for u in users),
-            "today_minutes": sum(u["today_minutes"] for u in users),
+            "total_credits": round(sum(u["total_credits"] for u in users), 1),
+            "today_credits": round(sum(u["today_credits"] for u in users), 1),
+            "minutes_per_credit": mpc,
             "active_courses": int(active_courses),
         }

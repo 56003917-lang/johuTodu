@@ -21,10 +21,17 @@ class StudyParams:
     challenge_max_s: int = 180
     challenge_timeout_s: int = 120
     daily_cap_hours: float = 8
+    # 学时换算口径：每 N 分钟 = 1 学时（台账/界面显示口径，达标判定仍按秒级）
+    minutes_per_credit: int = 30
 
     @property
     def daily_cap_s(self) -> int:
         return int(self.daily_cap_hours * 3600)
+
+    @property
+    def credit_seconds(self) -> int:
+        """1 学时对应的秒数（换算基准）。"""
+        return int(self.minutes_per_credit * 60)
 
 
 @dataclass

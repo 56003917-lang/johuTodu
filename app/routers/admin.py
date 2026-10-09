@@ -57,12 +57,15 @@ def roster_template(admin: User = Depends(require_admin)):
 # 课程库
 # ======================================================================
 @router.get("/courses")
-def admin_courses(admin: User = Depends(require_admin), db=Depends(get_db)):
-    """课程库总览（含文件指纹、上下架状态）。"""
+def admin_courses(request: Request, admin: User = Depends(require_admin), db=Depends(get_db)):
+    """课程库总览（含文件指纹、上下架状态、达标学时）。"""
+    mpc = request.app.state.settings.study.minutes_per_credit
     courses = db.query(Course).order_by(Course.status.desc(), Course.category, Course.title).all()
     return ok([{
         "id": c.id, "file_name": c.file_name, "title": c.title, "category": c.category or "通用",
-        "required_minutes": c.required_minutes, "file_type": c.file_type,
+        "required_minutes": c.required_minutes,
+        "required_credits": round(c.required_minutes / mpc, 1),
+        "file_type": c.file_type,
         "file_size_mb": round(c.file_size / (1024.0 * 1024.0), 2),
         "file_hash": c.file_hash[:12], "status": c.status,
         "status_text": "上架" if c.status == 1 else "下架",
@@ -121,7 +124,7 @@ def admin_overview(request: Request, department: str = "",
                    admin: User = Depends(require_admin)):
     """学时总览表数据（管理端首页表格）。"""
     st = request.app.state
-    return ok(exporter.overview(st.db, department))
+    return ok(exporter.overview(st.db, st.settings, department))
 
 
 @router.get("/export/logs")

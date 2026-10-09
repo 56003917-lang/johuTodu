@@ -16,6 +16,7 @@ study:                 # 学时有效性核心参数（§6）
   challenge_max_s: 180         # 防挂机弹窗随机触发上限（秒）
   challenge_timeout_s: 120     # 弹窗应答时限，超时暂停计时
   daily_cap_hours: 8           # 单日计入学时上限（小时）
+  minutes_per_credit: 30       # 学时换算：每 30 分钟 = 1 学时（台账/界面显示口径）
 
 roster:                # 名册与账号（§3.1 / §9）
   initial_password: "employee_no"  # 初始密码策略：employee_no=工号；或填固定字符串
@@ -30,12 +31,12 @@ courses:               # 课程库（§7）
   allowed_ext: [pdf]
   max_file_mb: 100
   scan_interval_min: 5
-  default_required_minutes: 60    # 未在 registry 登记的课程默认达标学时（分钟）
-  registry: {}                    # 按文件名登记课程名称与达标学时，示例：
+  default_required_minutes: 60    # 未在 registry 登记的课程默认达标时长（分钟）；按学时口径 60 分钟 = 2 学时
+  registry: {}                    # 按文件名登记课程名称与达标时长（分钟），示例：
   # registry:
   #   高处作业/登高作业安全要点.pdf:
   #     title: 登高作业安全要点
-  #     required_minutes: 60
+  #     required_minutes: 60      # 60 分钟 = 2 学时；若要求 1 学时填 30
   #   人孔井作业安全规范.pdf:
   #     required_minutes: 30
 
